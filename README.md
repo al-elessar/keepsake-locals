@@ -78,8 +78,6 @@ npx web-ext build --source-dir extension   # build a zip
 
 ## Roadmap
 
-- [ ] Confirm the Windows set-up step and non-English characters on a real Windows PC
-- [ ] Test on more communities, including livestream replays and audio posts
 - [ ] Optional companion app that runs downloads directly (no script step)
 
 See [CHANGELOG.md](CHANGELOG.md) for what each version added.
