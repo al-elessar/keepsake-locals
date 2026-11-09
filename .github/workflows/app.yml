@@ -29,7 +29,7 @@ jobs:
       - name: Install
         working-directory: app
         run: npm ci
-      - name: Download Electron (retried: GitHub downloads sometimes time out)
+      - name: Download Electron (retried, as GitHub downloads sometimes time out)
         working-directory: app
         run: for i in 1 2 3 4; do node node_modules/electron/install.js && break; echo "retrying in 20 s"; sleep 20; done
       - name: Unit tests
