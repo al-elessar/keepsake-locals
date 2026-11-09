@@ -1,5 +1,14 @@
 # Changelog
 
+## Desktop app 0.1.0 (beta, Windows) – unreleased
+- New standalone app in `app/`: sign in on Locals' own page inside the app, **Find all videos**, tick and **Download**, with no script step.
+- Download queue with progress, pause/resume, automatic retries, and a clear stop when the token has expired (HTTP 403).
+- yt-dlp and ffmpeg fetched on first use from their official releases and checked against their published checksums.
+- **Rename old downloads** built in.
+
+## Extension (next version)
+- Internal: detection, merging, scrolling and naming code moved to `core/`, shared with the desktop app. No change in behaviour.
+
 ## 0.5.0 – 2026-11-09
 - Renamed to **Keepsake – Downloader for Locals**, with a new add-on ID.
 - Publishing materials: README, Firefox listing text, issue templates and automated checks.

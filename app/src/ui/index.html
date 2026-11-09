@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'">
+  <title>Keepsake – Downloader for Locals</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="icon.png" alt="" width="30" height="30">
+      <div>
+        <div class="name">Keepsake</div>
+        <div class="tag">Downloader for Locals · unofficial</div>
+      </div>
+    </div>
+    <div class="community">
+      <label for="community" class="sr">Community</label>
+      <select id="community" title="Community"></select>
+      <button id="addCommunity" title="Add a community">＋ Add</button>
+    </div>
+    <div class="chips">
+      <span class="chip" id="chipVideos">0 videos</span>
+      <span class="chip" id="chipToken">Token: –</span>
+    </div>
+    <button id="openLocals" class="ghost">Open Locals window</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="videos" role="tab">Videos</button>
+    <button class="tab" data-tab="downloads" role="tab">Downloads <span id="tabDlCount" class="badge"></span></button>
+    <button class="tab" data-tab="settings" role="tab">Tools &amp; settings <span id="tabToolsWarn" class="badge warn" hidden>!</span></button>
+  </nav>
+
+  <!-- ====================================================== add community -->
+  <div id="addPanel" class="panel add" hidden>
+    <label>Community name or link
+      <input id="addInput" type="text" placeholder="e.g. dap2k   or   https://dap2k.locals.com" spellcheck="false">
+    </label>
+    <button id="addConfirm" class="primary">Add</button>
+    <button id="addCancel">Cancel</button>
+    <div id="addMsg" class="muted"></div>
+  </div>
+
+  <main>
+    <!-- ==================================================== videos -->
+    <section id="tab-videos" class="tabpage">
+      <div id="welcome" class="panel steps" hidden>
+        <h2>Getting started</h2>
+        <ol>
+          <li><b>Add your community</b> with <b>＋ Add</b> at the top (its name is the first part of its web address, such as <i>dap2k</i> in dap2k.locals.com).</li>
+          <li><b>Sign in to Locals</b> in the Locals window, on Locals' own page. Keepsake never sees your password; it only keeps the signed-in session on this computer, as a browser would.</li>
+          <li>Click <b>Find all videos</b>, then <b>play any video for a few seconds</b> in the Locals window so that your access token is picked up.</li>
+          <li>Tick the videos you want, choose a folder and click <b>Download</b>.</li>
+        </ol>
+      </div>
+
+      <div class="panel find">
+        <div class="row">
+          <button id="findContent" class="primary">Find all videos</button>
+          <button id="findFeed" title="Also look through the Feed, for videos in ordinary posts">Also check the Feed</button>
+          <button id="stopFind" hidden>Stop</button>
+          <span id="findMsg" class="muted"></span>
+        </div>
+        <div id="tokenHelp" class="hint" hidden></div>
+      </div>
+
+      <div class="panel listpanel">
+        <div class="row listtools">
+          <input id="filter" type="search" placeholder="Search titles…">
+          <div class="seg">
+            <button id="selAll">All</button>
+            <button id="selNone">None</button>
+            <button id="selShown" title="Tick only what the search shows">Shown</button>
+            <button id="selNotDone" title="Tick the videos not downloaded yet">Not downloaded</button>
+          </div>
+          <label class="inline">Order
+            <select id="order">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </label>
+          <span id="selCount" class="muted"></span>
+        </div>
+        <ul id="list" class="vlist"></ul>
+        <div id="empty" class="empty" hidden>No videos yet. Click <b>Find all videos</b>.</div>
+        <div class="muted small">Tip: hold Shift and click to tick a range.</div>
+      </div>
+
+      <div class="panel dlbar">
+        <div class="row">
+          <label class="grow">Save to
+            <span class="folder"><input id="folder" type="text" readonly placeholder="Choose a folder…"><button id="chooseFolder">Choose…</button></span>
+          </label>
+          <label>Quality
+            <select id="quality">
+              <option value="">Best</option>
+              <option value="1080">1080p max</option>
+              <option value="720">720p max</option>
+              <option value="480">480p max</option>
+            </select>
+          </label>
+          <label>File names
+            <select id="naming">
+              <option value="date">2026-11-01 Title</option>
+              <option value="number">001 Title</option>
+            </select>
+          </label>
+          <label>Punctuation
+            <select id="nameStyle">
+              <option value="plain">Remove it</option>
+              <option value="lookalike">Keep look-alikes “ ” ’</option>
+            </select>
+          </label>
+          <button id="download" class="primary big">Download</button>
+        </div>
+        <div id="dlMsg" class="muted"></div>
+      </div>
+    </section>
+
+    <!-- ==================================================== downloads -->
+    <section id="tab-downloads" class="tabpage" hidden>
+      <div class="panel">
+        <div class="row">
+          <button id="resumeAll" class="primary">Resume all</button>
+          <button id="pauseAll">Pause all</button>
+          <button id="retryFailed">Retry failed</button>
+          <button id="clearFinished">Clear finished</button>
+          <button id="openFolder">Open folder</button>
+          <span id="qSummary" class="muted"></span>
+        </div>
+        <div id="halted" class="alert" hidden></div>
+      </div>
+      <div class="panel">
+        <ul id="queue" class="qlist"></ul>
+        <div id="qEmpty" class="empty">Nothing here yet. Tick videos on the <b>Videos</b> tab and click <b>Download</b>.</div>
+      </div>
+    </section>
+
+    <!-- ==================================================== settings -->
+    <section id="tab-settings" class="tabpage" hidden>
+      <div class="panel">
+        <h2>Download tools</h2>
+        <p class="muted">Keepsake uses two free programs to save videos: <b>yt-dlp</b> (downloads) and <b>ffmpeg</b> (joins the pieces).
+          They are fetched from their official GitHub pages the first time and checked against their published checksums.</p>
+        <table class="tools">
+          <tr><th>yt-dlp</th><td id="ytdlpStatus">checking…</td></tr>
+          <tr><th>ffmpeg</th><td id="ffmpegStatus">checking…</td></tr>
+        </table>
+        <div class="row">
+          <button id="installTools" class="primary">Download the tools</button>
+          <button id="updateYtdlp">Update yt-dlp</button>
+          <button id="useOwnTools">Use my own copies…</button>
+          <span id="toolsMsg" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Options</h2>
+        <div class="row">
+          <label>Downloads at once
+            <select id="parallel"><option>1</option><option>2</option><option>3</option></select>
+          </label>
+          <label>Pieces at once per video
+            <input id="fragments" type="number" min="1" max="16">
+          </label>
+        </div>
+        <label class="check"><input id="useCookies" type="checkbox"> Let yt-dlp use the Locals sign-in (needed by some communities; a temporary cookie file is deleted when downloads finish)</label>
+      </div>
+
+      <div class="panel">
+        <h2>More tools</h2>
+        <div class="row">
+          <button id="renameOld">Rename old downloads…</button>
+          <span class="muted">Renames videos named by ID (e.g. “001 v_9c750134-….mp4”) to their titles.</span>
+        </div>
+        <div class="row">
+          <button id="exportBat">Save Windows script (.bat)</button>
+          <button id="exportSh">Save Mac/Linux script (.sh)</button>
+          <button id="exportDebug">Save debug info</button>
+        </div>
+        <div id="moreMsg" class="muted"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Privacy</h2>
+        <p class="muted">You sign in on Locals' own page inside the Locals window; Keepsake never sees or stores your password.
+          The signed-in session and your video token are kept only on this computer. Keepsake sends nothing anywhere except
+          to Locals (as your browser would) and, once, to GitHub to fetch the tools.</p>
+        <div class="row">
+          <button id="signOut">Sign out of Locals</button>
+          <button id="removeCommunity" class="danger">Forget this community</button>
+        </div>
+      </div>
+
+      <p class="muted small footer">Keepsake <span id="version"></span> · Unofficial – not affiliated with Locals or Rumble · MIT licence ·
+        <a href="https://github.com/al-elessar/keepsake-locals" id="repoLink">github.com/al-elessar/keepsake-locals</a><br>
+        For personal offline viewing of videos you can already watch. Please don't share what you download.</p>
+    </section>
+  </main>
+
+  <script src="../core/generate.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

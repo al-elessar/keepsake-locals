@@ -1,0 +1,65 @@
+name: Desktop app
+
+# Tests the app on Linux (unit tests + end-to-end test against the mock Locals site),
+# then builds the Windows installer on Windows.
+# - Every run: the installer is attached to the run as "Keepsake-Setup-windows" (Actions tab).
+# - Tags named app-v* (e.g. app-v0.1.0): the installer is also published as a GitHub release.
+
+on:
+  push:
+    branches: [main]
+    tags: ['app-v*']
+  pull_request:
+    paths: ['app/**', 'core/**', 'scripts/**', 'test/e2e/**', '.github/workflows/app.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install ffmpeg (used by the mock site and the downloads)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg xvfb
+      - name: Install
+        working-directory: app
+        run: npm ci
+      - name: Unit tests
+        working-directory: app
+        run: npm run sync && npm test
+      - name: End-to-end test (mock Locals site, real yt-dlp)
+        working-directory: app
+        run: xvfb-run -a npm run test:e2e
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the installer
+        working-directory: app
+        run: |
+          npm ci
+          npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Keepsake-Setup-windows
+          path: app/dist/Keepsake-Setup-*.exe
+          if-no-files-found: error
+      - name: Publish release (app-v* tags only)
+        if: startsWith(github.ref, 'refs/tags/app-v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" app/dist/Keepsake-Setup-*.exe \
+            --prerelease --title "Keepsake desktop app ${GITHUB_REF_NAME#app-v}" \
+            --notes-file app/RELEASE-NOTES.md
