@@ -1,6 +1,11 @@
 # Changelog
 
-## Desktop app 0.1.1 (beta, Windows) – unreleased
+## Desktop app 0.2.0 (beta) – unreleased
+- **Mac and Linux** versions (Mac: .dmg for Apple silicon and Intel; Linux: AppImage), built by GitHub Actions alongside Windows.
+- **Automatic updates** on Windows and Linux; a notice with a download link on Mac.
+- **Check for new videos:** looks at the newest posts only (a few seconds) and marks new uploads **NEW** until they are downloaded; the **New** button ticks just those.
+
+## Desktop app 0.1.1 (beta, Windows)
 - **Use my Firefox sign-in:** Google doesn't allow signing in inside apps, so members who sign in to Locals with Google can sign in in Firefox and Keepsake reuses that sign-in (only the locals.com cookies are copied).
 
 ## Desktop app 0.1.0 (beta, Windows)

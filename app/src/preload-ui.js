@@ -13,6 +13,7 @@ const ACTIONS = [
   'removeCommunity',
   'openLocals',
   'findAll',
+  'checkNew',
   'stopFind',
   'setExcluded',
   'setOption',
@@ -28,6 +29,9 @@ const ACTIONS = [
   'exportScript',
   'exportDebug',
   'importFirefox',
+  'checkUpdates',
+  'updateStatus',
+  'installUpdate',
   'signOut',
   'openExternal'
 ];
@@ -35,7 +39,7 @@ const ACTIONS = [
 const api = {};
 for (const a of ACTIONS) api[a] = call(a);
 api.on = (channel, fn) => {
-  const allowed = ['community', 'scroll', 'queue', 'tools', 'locals', 'notice'];
+  const allowed = ['community', 'scroll', 'queue', 'tools', 'locals', 'notice', 'update'];
   if (!allowed.includes(channel)) return;
   ipcRenderer.on('ev:' + channel, (_e, payload) => fn(payload));
 };

@@ -21,6 +21,7 @@ const { Tools } = require('./tools.js');
 const { Downloader } = require('./downloader.js');
 const { renameOld } = require('./library.js');
 const { importFromFirefox } = require('./browser-cookies.js');
+const { setupUpdates } = require('./updater.js');
 
 // ------------------------------------------------------------------ test hooks
 // Only used by the automated tests (a mock Locals server on this computer).
@@ -60,6 +61,8 @@ let localsWin = null;
 let localsSession = null;
 let scan = null; // { slug, stop }
 let cookieFile = null;
+let updates = null;
+let updateState = { state: 'none' };
 
 const send = (channel, payload) => {
   if (mainWin && !mainWin.isDestroyed()) mainWin.webContents.send('ev:' + channel, payload);
@@ -231,9 +234,17 @@ async function openLocals(slug, page) {
   }
 }
 
-async function findAll(slug, page) {
+/**
+ * Scrolls a community's page to collect its videos.
+ * quick: only look at the top of the page (the newest posts) - "Check for new videos".
+ * Once a full scan has finished, videos that weren't known before are marked "new", and
+ * stay marked until they are downloaded. (Before that, everything would look new.)
+ */
+async function findAll(slug, page, quick) {
   if (scan) return { error: 'Already looking for videos.' };
-  scan = { slug, stop: false };
+  scan = { slug, stop: false, quick: Boolean(quick) };
+  const before = new Set(stateOf(slug).order);
+  const hadFullScan = Boolean(store.data.scanned[slug]);
   const me = scan;
   try {
     await openLocals(slug, page || 'content');
@@ -248,10 +259,21 @@ async function findAll(slug, page) {
       count: () => stateOf(slug).order.length,
       sleep,
       isStopped: () => me.stop || !win || win.isDestroyed(),
-      report: (st) => send('scroll', { slug, page, status: st, count: stateOf(slug).order.length }),
+      report: (st) => send('scroll', { slug, page, quick: Boolean(quick), status: st, count: stateOf(slug).order.length }),
       rescan: () => win && !win.isDestroyed() && win.webContents.send('locals:rescan')
-    });
-    return { status, count: stateOf(slug).order.length };
+    }, quick ? { maxRounds: 3 } : undefined);
+    const fresh = hadFullScan ? stateOf(slug).order.filter((id) => !before.has(id)) : [];
+    if (status === 'done' && !quick && !hadFullScan) {
+      store.data.scanned[slug] = Date.now();
+      store.save();
+    }
+    if (hadFullScan) {
+      const done = store.list('downloaded', slug);
+      const marked = new Set(Array.from(store.list('fresh', slug)).filter((id) => !done.has(id)));
+      for (const id of fresh) marked.add(id);
+      store.setList('fresh', slug, marked);
+    }
+    return { status, count: stateOf(slug).order.length, fresh: fresh.length, fullScan: Boolean(store.data.scanned[slug]) };
   } finally {
     scan = null;
   }
@@ -393,6 +415,7 @@ function registerActions() {
       state: st ? Object.assign({}, st, { samples: undefined }) : M.newState(slug, `${slug}.beta.locals.com`),
       excluded: Array.from(store.list('excluded', slug)),
       downloaded: Array.from(store.list('downloaded', slug)),
+      fresh: Array.from(store.list('fresh', slug)),
       folder: folderFor(slug),
       scanning: scan && scan.slug === slug ? scan : null
     };
@@ -416,7 +439,8 @@ function registerActions() {
   });
 
   handle('openLocals', (slug, page) => openLocals(slug, page));
-  handle('findAll', (slug, page) => findAll(slug, page));
+  handle('findAll', (slug, page) => findAll(slug, page, false));
+  handle('checkNew', (slug) => findAll(slug, 'content', true));
   handle('stopFind', () => {
     if (scan) scan.stop = true;
   });
@@ -554,6 +578,15 @@ function registerActions() {
     return r;
   });
 
+  handle('checkUpdates', async () => (updates ? updates.check(true) : { state: 'off' }));
+  handle('updateStatus', () => Object.assign({ enabled: Boolean(updates && updates.enabled), current: VERSION }, updateState));
+  handle('installUpdate', () => {
+    if (!updates) return;
+    // Downloads carry on from where they stopped after the restart ("Resume all").
+    app.isQuitting = true;
+    updates.install();
+  });
+
   handle('signOut', async () => {
     if (localsWin && !localsWin.isDestroyed()) localsWin.close();
     await localsSession.clearStorageData();
@@ -585,6 +618,10 @@ app.whenReady().then(() => {
   setupLocalsSession();
   registerActions();
   createMainWindow();
+  updates = setupUpdates((s) => {
+    updateState = s;
+    send('update', Object.assign({ current: VERSION }, s));
+  });
   if (TEST.dataDir) global.__keepsake = { store, tools, downloader };
 });
 

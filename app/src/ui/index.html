@@ -39,6 +39,12 @@
     <button id="noticeClose" class="ghost" title="Close">✕</button>
   </div>
 
+  <div id="updateBar" class="notice update" hidden>
+    <span id="updateText"></span>
+    <button id="updateAction" class="primary"></button>
+    <button id="updateClose" class="ghost" title="Later">✕</button>
+  </div>
+
   <!-- ====================================================== add community -->
   <div id="addPanel" class="panel add" hidden>
     <label>Community name or link
@@ -65,6 +71,7 @@
 
       <div class="panel find">
         <div class="row">
+          <button id="checkNew" class="primary" title="Looks at the newest posts only: takes a few seconds" hidden>Check for new videos</button>
           <button id="findContent" class="primary">Find all videos</button>
           <button id="findFeed" title="Also look through the Feed, for videos in ordinary posts">Also check the Feed</button>
           <button id="stopFind" hidden>Stop</button>
@@ -80,6 +87,7 @@
             <button id="selAll">All</button>
             <button id="selNone">None</button>
             <button id="selShown" title="Tick only what the search shows">Shown</button>
+            <button id="selNew" title="Tick only the videos found by the last check">New</button>
             <button id="selNotDone" title="Tick the videos not downloaded yet">Not downloaded</button>
           </div>
           <label class="inline">Order
@@ -188,6 +196,15 @@
           <button id="exportDebug">Save debug info</button>
         </div>
         <div id="moreMsg" class="muted"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Updates</h2>
+        <div class="row">
+          <span>Keepsake <b id="versionNow"></b></span>
+          <button id="checkUpdates">Check for updates</button>
+          <span id="updateMsg" class="muted"></span>
+        </div>
       </div>
 
       <div class="panel">

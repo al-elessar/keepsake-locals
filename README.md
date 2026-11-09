@@ -2,7 +2,7 @@
 
 <img src="docs/icon/icon.svg" width="64" align="right" alt="">
 
-A browser extension for **Firefox and Chrome**, and a **desktop app for Windows** (beta), that let members of a [Locals](https://locals.com) community save that community's videos to their own computer for offline viewing.
+A browser extension for **Firefox and Chrome**, and a **desktop app for Windows, Mac and Linux** (beta), that let members of a [Locals](https://locals.com) community save that community's videos to their own computer for offline viewing.
 
 > **Unofficial.** Keepsake is not affiliated with, endorsed by or supported by Locals or Rumble.
 > It only works with videos your own account can already watch. Please respect creators: don't share or re-upload what you download.
@@ -86,8 +86,8 @@ For the desktop app, see [app/README.md](app/README.md#development).
 
 ## Roadmap
 
-- [x] Desktop app that runs downloads directly, no script step (Windows beta: [app/](app/README.md))
-- [ ] Desktop app for Mac and Linux, with automatic updates
+- [x] Desktop app that runs downloads directly, no script step ([app/](app/README.md))
+- [x] Desktop app for Mac and Linux, with automatic updates and "Check for new videos"
 
 See [CHANGELOG.md](CHANGELOG.md) for what each version added.
 

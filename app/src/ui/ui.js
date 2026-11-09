@@ -11,6 +11,7 @@
   let comm = null; // { state, excluded, downloaded, folder }
   let excluded = new Set();
   let downloaded = new Set();
+  let fresh = new Set(); // found by the latest check, not there before
   let queue = [];
   let queueSummary = {};
   let shownIds = [];
@@ -83,10 +84,12 @@
       comm = null;
       excluded = new Set();
       downloaded = new Set();
+      fresh = new Set();
     } else {
       comm = await K.getCommunity(current);
       excluded = new Set(comm.excluded);
       downloaded = new Set(comm.downloaded);
+      fresh = new Set(comm.fresh);
     }
     lastClickedIndex = null;
     renderAll();
@@ -128,6 +131,12 @@
     $('findContent').disabled = !current || scanning;
     $('findFeed').disabled = !current || scanning;
     $('findContent').hidden = scanning;
+    // Once the list exists, "Check for new videos" is the everyday button.
+    $('checkNew').hidden = scanning || !count;
+    $('findContent').className = count ? '' : 'primary';
+    const nFresh = Array.from(fresh).filter((id) => !downloaded.has(id)).length;
+    $('selNew').textContent = fresh.size ? `New (${nFresh})` : 'New';
+    $('selNew').disabled = !nFresh;
     $('stopFind').hidden = !scanning;
 
     const n = selected().length;
@@ -165,6 +174,9 @@
     } else if (downloaded.has(id)) {
       pill.className = 'pill done';
       pill.textContent = '✓ SAVED';
+    } else if (fresh.has(id)) {
+      pill.className = 'pill new';
+      pill.textContent = 'NEW';
     } else {
       pill.hidden = true;
     }
@@ -408,15 +420,32 @@
     return true;
   }
 
-  async function find(page) {
+  async function find(page, quick) {
     if (!current) return;
     scanning = true;
     renderStatus();
     msg('findMsg', 'Opening Locals…');
-    const r = await K.findAll(current, page);
+    const r = quick ? await K.checkNew(current) : await K.findAll(current, page);
     scanning = false;
-    renderStatus();
-    if (r && r.error) msg('findMsg', r.error, 'warn');
+    if (r && r.error) {
+      renderStatus();
+      msg('findMsg', r.error, 'warn');
+      return;
+    }
+    comm = await K.getCommunity(current);
+    fresh = new Set(comm.fresh);
+    renderAll();
+    if (quick && !r.fullScan) {
+      msg('findMsg', 'Click "Find all videos" once first, so Keepsake knows which videos are already there.', 'warn');
+    } else if (r && r.status === 'done' && (quick || r.fresh)) {
+      msg(
+        'findMsg',
+        r.fresh
+          ? `${r.fresh} new video${r.fresh === 1 ? '' : 's'}, marked NEW. Click "New" to tick only those.`
+          : 'No new videos since the last check.',
+        r.fresh ? 'ok' : 'muted'
+      );
+    }
   }
 
   function wire() {
@@ -462,6 +491,7 @@
     });
     $('importFirefox').addEventListener('click', () => useFirefox('signInMsg'));
     $('findContent').addEventListener('click', () => find('content'));
+    $('checkNew').addEventListener('click', () => find('content', true));
     $('findFeed').addEventListener('click', () => find('feed'));
     $('stopFind').addEventListener('click', () => K.stopFind());
 
@@ -504,6 +534,7 @@
       reselect((id) => !shown.has(id))();
     });
     $('selNotDone').addEventListener('click', reselect((id) => downloaded.has(id)));
+    $('selNew').addEventListener('click', reselect((id) => !fresh.has(id) || downloaded.has(id)));
 
     $('chooseFolder').addEventListener('click', async () => {
       if (!current) return;
@@ -585,7 +616,7 @@
       if (p.slug !== current) return;
       if (p.status === 'running') {
         scanning = true;
-        msg('findMsg', `Scrolling the ${p.page === 'feed' ? 'Feed' : 'Content page'}… ${p.count} videos so far.`);
+        msg('findMsg', p.quick ? 'Checking the newest posts…' : `Scrolling the ${p.page === 'feed' ? 'Feed' : 'Content page'}… ${p.count} videos so far.`);
       } else {
         scanning = false;
         msg(
@@ -600,6 +631,16 @@
     });
     K.on('queue', applyQueue);
     K.on('tools', (p) => msg('toolsMsg', p.message || ''));
+    K.on('update', showUpdate);
+    $('updateClose').addEventListener('click', () => ($('updateBar').hidden = true));
+    $('updateAction').addEventListener('click', () => {
+      if (updateInfo.state === 'ready') K.installUpdate();
+      else K.openExternal(updateInfo.releases || 'https://github.com/al-elessar/keepsake-locals/releases');
+    });
+    $('checkUpdates').addEventListener('click', async () => {
+      msg('updateMsg', 'Checking…');
+      showUpdate(await K.checkUpdates());
+    });
     K.on('notice', (p) => {
       $('noticeText').textContent = p.text;
       $('noticeText').className = '';
@@ -607,10 +648,48 @@
     });
   }
 
+  // ------------------------------------------------------------------ updates
+
+  let updateInfo = { state: 'none' };
+  function showUpdate(u) {
+    updateInfo = u || { state: 'none' };
+    const bar = $('updateBar');
+    const action = $('updateAction');
+    let text = '';
+    let cls = 'muted';
+    if (u.state === 'ready') {
+      $('updateText').textContent = `Keepsake ${u.version} is ready. Restart to finish updating (unfinished downloads carry on afterwards).`;
+      action.textContent = 'Restart now';
+      action.hidden = false;
+      bar.hidden = false;
+      text = `Version ${u.version} is ready: restart to install it.`;
+      cls = 'ok';
+    } else if (u.state === 'available' && !u.canInstall) {
+      $('updateText').textContent = `Keepsake ${u.version} is available.`;
+      action.textContent = 'Download';
+      action.hidden = false;
+      bar.hidden = false;
+      text = `Version ${u.version} is available.`;
+      cls = 'ok';
+    } else if (u.state === 'available' || u.state === 'downloading') {
+      text = `Downloading version ${u.version}…${u.percent ? ` ${u.percent}%` : ''}`;
+    } else if (u.state === 'none') {
+      text = u.version ? 'You have the latest version.' : '';
+    } else if (u.state === 'error') {
+      text = `Couldn't check for updates (${u.message}).`;
+      cls = 'warn';
+    } else if (u.state === 'off') {
+      text = 'Updates are checked automatically in the installed app.';
+    }
+    msg('updateMsg', text, cls);
+  }
+
   async function init() {
     info = await K.init();
     const o = info.options;
     $('version').textContent = info.version;
+    $('versionNow').textContent = info.version;
+    K.updateStatus().then((u) => u.state !== 'none' && showUpdate(u));
     $('quality').value = o.quality || '';
     $('naming').value = o.naming || 'date';
     $('nameStyle').value = o.nameStyle || 'plain';

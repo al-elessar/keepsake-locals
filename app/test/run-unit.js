@@ -10,6 +10,7 @@ const { Tools, parseSums } = require('../src/tools.js');
 const { Downloader } = require('../src/downloader.js');
 const { renameOld } = require('../src/library.js');
 const ff = require('../src/browser-cookies.js');
+const { rewrite } = require('../scripts/update-feed.js');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'keepsake-unit-'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -58,6 +59,18 @@ async function until(fn, ms, what) {
   assert.ok(fs.existsSync(path.join(lib, `002 ${B}.mkv`)), 'existing file is never overwritten');
   assert.ok(fs.existsSync(path.join(lib, `notes ${A}.txt`)), 'only video files are renamed');
   console.log('rename: OK');
+
+  // ---------------------------------------------------------------- update feed links
+  {
+    const yml = fs.readFileSync(path.join(__dirname, 'fixtures', 'latest-linux.yml'), 'utf8');
+    const out = rewrite(yml, 'app-v0.2.0');
+    const base = 'https://github.com/al-elessar/keepsake-locals/releases/download/app-v0.2.0/';
+    assert.ok(out.includes(`  - url: ${base}Keepsake-0.2.0-linux-x86_64.AppImage`));
+    assert.ok(out.includes(`path: ${base}Keepsake-0.2.0-linux-x86_64.AppImage`));
+    assert.ok(/sha512: \S+==/.test(out) && /releaseDate/.test(out), 'other lines unchanged');
+    assert.strictEqual(rewrite(out, 'app-v0.2.0'), out, 'running twice changes nothing');
+    console.log('update feed: OK');
+  }
 
   // ---------------------------------------------------------------- Firefox sign-in
   {

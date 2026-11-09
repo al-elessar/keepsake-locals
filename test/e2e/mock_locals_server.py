@@ -6,6 +6,8 @@ real site's. Also serves a small real HLS stream for every video ID, which requi
 right vt token and Referer (like Locals), so yt-dlp can really download it.
 The page has a strict Content-Security-Policy (no eval), like many real sites.
 Video 100 always answers 403, to test the "token expired" handling.
+GET /__add_new?n=3 "publishes" 3 new videos at the top of the Content page.
+GET /updates/latest-linux.yml offers a newer app version (9.9.9), for the update check.
 """
 import base64, http.server, json, os, shutil, subprocess, tempfile, urllib.parse
 
@@ -13,9 +15,13 @@ def b64(o): return base64.urlsafe_b64encode(json.dumps(o).encode()).decode().rst
 TOKEN = b64({"typ":"JWT"}) + '.' + b64({"aud":"video","exp":1809764380}) + '.c2ln'
 PAGES, PER = 5, 20
 FORBIDDEN = 'v_%08x-1111-4222-8333-%012x' % (99, 99)
+EXTRA = [0]  # videos "published" since the server started
 
 def page(n):
     recs = []
+    if n == 0:  # the newest posts come first
+        for i in range(EXTRA[0]):
+            recs.append('{id:%d,title:"Brand new video %d",media:{video:"v_%08x-2222-4222-8333-%012x",duration:60},createdAt:"2026-11-%02dT12:00:00Z"}' % (800000 + i, i + 1, i, i, i + 1))
     for i in range(PER):
         k = n * PER + i
         vid = 'v_%08x-1111-4222-8333-%012x' % (k, k)
@@ -66,6 +72,12 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(u.query)
+        if u.path.startswith('/updates/latest'):
+            feed = 'version: 9.9.9\nfiles:\n  - url: Keepsake-9.9.9.AppImage\n    sha512: AAAA\n    size: 1\npath: Keepsake-9.9.9.AppImage\nsha512: AAAA\nreleaseDate: \'2026-12-01T00:00:00.000Z\'\n'
+            return self.reply(200, feed.encode(), 'text/yaml')
+        if u.path == '/__add_new':
+            EXTRA[0] += int(q.get('n', ['1'])[0])
+            return self.reply(200, str(EXTRA[0]).encode(), 'text/plain')
         if u.path.startswith('/_server/'):
             return self.reply(200, page(int(q['page'][0])).encode(), 'text/javascript')
         if '/hls/' in u.path:

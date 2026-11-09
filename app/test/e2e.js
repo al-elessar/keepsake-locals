@@ -60,7 +60,9 @@ async function until(fn, ms, what) {
         KEEPSAKE_TEST_HOST_RULES: 'MAP example.beta.locals.com 127.0.0.1:8765',
         KEEPSAKE_TEST_SCHEME: 'http',
         KEEPSAKE_TEST_HLS_BASE: 'http://127.0.0.1:8765/api/v1/posts/content/hls/',
-        KEEPSAKE_TEST_FIREFOX_DIR: ffRoot
+        KEEPSAKE_TEST_FIREFOX_DIR: ffRoot,
+        KEEPSAKE_TEST_UPDATE_URL: 'http://127.0.0.1:8765/updates/',
+        KEEPSAKE_TEST_NO_UPDATE_DOWNLOAD: '1'
       })
     });
     const win = await app.firstWindow();
@@ -105,6 +107,25 @@ async function until(fn, ms, what) {
     }
     console.log('100 videos with titles and dates: OK');
 
+    // 2b) Three videos are published; "Check for new videos" finds and marks them
+    await fetch('http://127.0.0.1:8765/__add_new?n=3');
+    if (await win.isHidden('#checkNew')) throw new Error('"Check for new videos" should show once videos are known');
+    await win.click('#checkNew');
+    const checked = await until(async () => {
+      const t = await win.textContent('#findMsg');
+      return /new video/.test(t) && t;
+    }, 60000, 'Check for new videos');
+    if (!/^3 new videos/.test(checked)) throw new Error('check: ' + checked);
+    const newPills = await win.$$eval('#list .pill.new', (p) => p.length);
+    if (newPills !== 3) throw new Error('NEW markers: ' + newPills);
+    await win.click('#selNew');
+    if (!/Download 3 videos/.test(await win.textContent('#download'))) throw new Error('New selection: ' + (await win.textContent('#download')));
+    console.log('check found 3 new videos, marked NEW, "New" ticks them: OK');
+    await win.click('#checkNew');
+    await until(async () => /No new videos/.test(await win.textContent('#findMsg')), 60000, 'second check');
+    if ((await win.$$eval('#list .pill.new', (p) => p.length)) !== 3) throw new Error('NEW should stay until downloaded');
+    console.log('second check: no new videos, the 3 stay marked NEW: OK');
+
     // 3) Token: play a video in the Locals window
     const locals = app.windows().find((w) => w.url().includes('example.beta.locals.com'));
     await locals.evaluate('playOne()');
@@ -124,6 +145,9 @@ async function until(fn, ms, what) {
     }, 240000, 'yt-dlp download');
     console.log('tools:', installed.trim(), '|', (await win.textContent('#ffmpegStatus')).trim());
     await shot('app-settings.png');
+    await win.click('#checkUpdates');
+    await until(async () => /9\.9\.9/.test(await win.textContent('#updateMsg')), 15000, 'update check');
+    console.log('update check sees the newer version: OK');
 
     // 5) Download nine videos into a chosen folder
     await app.evaluate((_e, folder) => {
@@ -160,6 +184,11 @@ async function until(fn, ms, what) {
     ok = true;
   } catch (e) {
     console.error(e);
+    if (app) {
+      const dir = SHOTS || os.tmpdir();
+      for (const [i, w] of app.windows().entries()) await w.screenshot({ path: path.join(dir, `failure-${i}.png`) }).catch(() => {});
+      console.error(`Screenshots of each window: ${dir}/failure-*.png`);
+    }
   } finally {
     if (app) await app.close().catch(() => {});
     mock.kill();

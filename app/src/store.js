@@ -27,7 +27,7 @@ class Store {
   constructor(dir) {
     this.file = path.join(dir, 'keepsake-data.json');
     this.timer = null;
-    this.data = { version: 1, options: {}, communities: {}, excluded: {}, downloaded: {}, queue: [] };
+    this.data = { version: 1, options: {}, communities: {}, excluded: {}, downloaded: {}, fresh: {}, scanned: {}, queue: [] };
     try {
       const saved = JSON.parse(fs.readFileSync(this.file, 'utf8'));
       if (saved && typeof saved === 'object') Object.assign(this.data, saved);
@@ -35,6 +35,8 @@ class Store {
       /* first run, or unreadable: start fresh */
     }
     this.data.options = Object.assign({}, DEFAULT_OPTIONS, this.data.options);
+    for (const k of ['communities', 'excluded', 'downloaded', 'fresh', 'scanned']) this.data[k] = this.data[k] || {};
+    this.data.queue = this.data.queue || [];
   }
 
   get options() {
@@ -75,6 +77,8 @@ class Store {
     delete this.data.communities[slug];
     delete this.data.excluded[slug];
     delete this.data.downloaded[slug];
+    delete this.data.fresh[slug];
+    delete this.data.scanned[slug];
     this.data.queue = this.data.queue.filter((q) => q.slug !== slug);
     this.save();
   }

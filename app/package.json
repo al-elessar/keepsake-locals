@@ -1,7 +1,7 @@
 {
   "name": "keepsake-locals-app",
   "productName": "Keepsake",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Keepsake – Downloader for Locals (unofficial desktop app). Not affiliated with Locals or Rumble.",
   "author": "Elessar (al-elessar)",
   "license": "MIT",
@@ -16,9 +16,14 @@
     "dist": "electron-builder --win nsis --x64 --publish never",
     "dist:dir": "npm run sync && electron-builder --dir --publish never",
     "test": "node test/run-unit.js",
-    "test:e2e": "node test/e2e.js"
+    "test:e2e": "node test/e2e.js",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:linux": "electron-builder --linux --publish never",
+    "predist:mac": "npm run sync",
+    "predist:linux": "npm run sync"
   },
   "dependencies": {
+    "electron-updater": "^6.8.11",
     "extract-zip": "^2.0.1"
   },
   "devDependencies": {
@@ -66,17 +71,49 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "category": "Video",
-      "artifactName": "Keepsake-${version}.${ext}"
+      "icon": "build/icon.png",
+      "artifactName": "Keepsake-${version}-linux-x86_64.${ext}",
+      "synopsis": "Save videos from your Locals communities for offline viewing (unofficial)"
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "category": "public.app-category.video",
-      "artifactName": "Keepsake-${version}.${ext}"
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "Keepsake-${version}-mac-${arch}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/al-elessar/keepsake-locals/releases/download/app-updates/"
+      }
+    ],
+    "dmg": {
+      "artifactName": "Keepsake-${version}-mac-${arch}.${ext}"
     }
   },
   "repository": {
