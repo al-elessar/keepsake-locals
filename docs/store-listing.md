@@ -53,3 +53,4 @@ Not required: the add-on doesn't collect or transmit user data. The manifest dec
 4. Firefox: upload the zip on addons.mozilla.org ("On your own"), download the signed `.xpi`, and rename it to `keepsake.xpi`.
 5. Chrome: attach the same zip as `keepsake-chrome.zip`.
 6. Create a GitHub release `v<version>` with both files and the changelog entry.
+7. Add the new version to `updates.json` (pointing at `releases/download/v<version>/keepsake.xpi`) so installed Firefox copies update automatically.

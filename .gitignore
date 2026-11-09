@@ -1,0 +1,12 @@
+# Never commit generated scripts or debug files: they can contain personal tokens
+*.bat
+*.sh
+*-debug.json
+test/sample-output.*
+web-ext-artifacts/
+node_modules/
+.DS_Store
+Thumbs.db
+test/e2e/.profile/
+test/e2e/popup.png
+__pycache__/

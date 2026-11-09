@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "{789c4ebb-4f1a-44b5-a1a9-3a970f65da1a}": {
+      "updates": [
+        {
+          "version": "0.5.0",
+          "update_link": "https://github.com/al-elessar/keepsake-locals/releases/download/v0.5.0/keepsake.xpi"
+        }
+      ]
+    }
+  }
+}
