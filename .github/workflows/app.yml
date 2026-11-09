@@ -31,7 +31,7 @@ jobs:
         run: npm ci
       - name: Download Electron (retried, as GitHub downloads sometimes time out)
         working-directory: app
-        run: for i in 1 2 3 4; do node node_modules/electron/install.js && break; echo "retrying in 20 s"; sleep 20; done
+        run: for i in 1 2 3 4 5 6; do node node_modules/electron/install.js && break; echo "retrying in 30 s"; sleep 30; done
       - name: Unit tests
         working-directory: app
         run: npm run sync && npm test
@@ -47,13 +47,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Cache Electron and build tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/Cache
+          key: electron-win-${{ hashFiles('app/package-lock.json') }}
       - name: Build the installer
         working-directory: app
         shell: bash
         run: |
           npm ci
-          for i in 1 2 3 4; do node node_modules/electron/install.js && break; echo "retrying in 20 s"; sleep 20; done
-          for i in 1 2 3; do npm run dist && break; echo "retrying in 20 s"; sleep 20; done
+          # GitHub downloads sometimes time out; finished pieces are kept, so each try gets further.
+          for i in 1 2 3 4 5 6; do node node_modules/electron/install.js && break; echo "retrying in 30 s"; sleep 30; done
+          for i in 1 2 3 4 5 6 7 8; do npm run dist && break; echo "retrying in 30 s"; sleep 30; done
           ls dist/Keepsake-Setup-*.exe
       - uses: actions/upload-artifact@v4
         with:
