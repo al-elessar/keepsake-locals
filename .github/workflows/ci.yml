@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Extension copies of core/ are up to date
+        run: node scripts/sync-core.js --check
       - name: Unit tests
         run: node test/run-tests.js
       - name: Firefox add-on lint

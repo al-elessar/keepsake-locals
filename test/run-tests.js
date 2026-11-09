@@ -1,12 +1,14 @@
-/* Offline tests for the page hook and the script generator. Run: node test/run-tests.js */
+/* Offline tests for the shared code in core/ (page hook, merging, scrolling, script generator). Run: node test/run-tests.js */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
 
-const root = path.join(__dirname, '..', 'extension');
-const LVS = require(path.join(root, 'popup', 'generate.js'));
+const root = path.join(__dirname, '..', 'core');
+const LVS = require(path.join(root, 'generate.js'));
+const M = require(path.join(root, 'merge.js'));
+const S = require(path.join(root, 'autoscroll.js'));
 
 // A fake token with the same structure as a real one (header.payload.signature).
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -47,7 +49,7 @@ function loadHook() {
     setTimeout: (f) => { timers.push(f); return timers.length; }, JSON, Object, Math, Array, String, Number, Promise
   };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(root, 'src', 'page-hook.js'), 'utf8'), ctx);
+  vm.runInContext(fs.readFileSync(path.join(root, 'page-hook.js'), 'utf8'), ctx);
   const flush = () => { while (timers.length) timers.shift()(); };
   return { window, FakeXHR, posted, flush, fetchResponses };
 }
@@ -96,6 +98,50 @@ function loadHook() {
   assert.strictEqual(dates.get(ID3), '', 'no date when none present');
   assert.ok(last.samples.length >= 1 && !last.samples.some((s) => s.snippet.includes(TOKEN)), 'samples are redacted');
   console.log('page hook: OK', [...vids.values()]);
+
+
+  // ---------------------------------------------------------- merging (core/merge.js)
+  assert.strictEqual(M.slugFromHost('dap2k.beta.locals.com'), 'dap2k');
+  assert.strictEqual(M.slugFromHost('www.locals.com'), null);
+  assert.strictEqual(M.pageKind('/feed?mode=content'), 'content');
+  assert.strictEqual(M.pageKind('/feed'), 'feed');
+  const ms = M.upgradeState(null, 'dap2k', 'dap2k.locals.com');
+  assert.ok(M.mergeFindings(ms, { videos: [[ID1, 'Near title', '', false, false]] }, { kind: 'feed', host: 'dap2k.locals.com' }));
+  assert.deepStrictEqual(ms.order, [ID1]);
+  assert.strictEqual(ms.videos[ID1].src, 'feed');
+  // A title from the same record beats a nearby one; the Content page wins over the Feed; beta host preferred
+  M.mergeFindings(ms, { videos: [[ID1, 'Real title', '2026-11-01', true, true], ['not-an-id', 'x']], token: TOKEN }, { kind: 'content', host: 'dap2k.beta.locals.com' });
+  assert.deepStrictEqual(ms.videos[ID1], { title: 'Real title', date: '2026-11-01', sure: true, dateSure: true, src: 'content', n: 0 });
+  assert.strictEqual(ms.token, TOKEN);
+  assert.strictEqual(ms.host, 'dap2k.beta.locals.com');
+  assert.strictEqual(M.mergeFindings(ms, { videos: [[ID1, 'Near again', '', false, false]] }, { kind: 'feed' }), false, 'sure title is kept');
+  const old = { schema: 1, slug: 's', videos: { [ID1]: { title: 't', sure: true, dateSure: true } }, order: [ID1] };
+  assert.strictEqual(M.upgradeState(old).videos[ID1].sure, false, 'older detection can be improved on');
+  console.log('merge: OK');
+
+  // ---------------------------------------------------------- scrolling (core/autoscroll.js)
+  {
+    let height = 1000; let count = 0; const steps = [];
+    const reports = [];
+    const status = await S.autoScroll({
+      step: (a) => { steps.push(a); if (a === 'end' && count < 60) { count += 20; height += 1000; } return height; },
+      count: () => count,
+      sleep: () => Promise.resolve(),
+      isStopped: () => false,
+      report: (r) => reports.push(r),
+      rescan: () => steps.push('rescan')
+    });
+    assert.strictEqual(status, 'done');
+    assert.strictEqual(count, 60);
+    assert.ok(steps.includes('nudge') && steps[steps.length - 1] === 'rescan');
+    assert.strictEqual(reports[reports.length - 1], 'done');
+    let stop = false; let n = 0;
+    const st = await S.autoScroll({ step: () => ++n, count: () => n, sleep: () => Promise.resolve(), isStopped: () => (stop = n > 10), report: () => {}, rescan: () => {} });
+    assert.strictEqual(st, 'stopped');
+    assert.strictEqual(typeof S.scrollStep, 'function');
+    new Function('return (' + S.scrollStep.toString() + ')'); // must survive being sent to a page as text
+    console.log('autoscroll: OK');
+  }
 
   // ---------------------------------------------------------- generator
   const state = {

@@ -1,3 +1,4 @@
+/* GENERATED from core/page-hook.js by scripts/sync-core.js - edit core/page-hook.js, not this copy. */
 /*
  * Keepsake – Downloader for Locals (unofficial) - page hook
  *

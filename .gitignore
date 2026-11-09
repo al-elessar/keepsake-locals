@@ -10,3 +10,8 @@ Thumbs.db
 test/e2e/.profile/
 test/e2e/popup.png
 __pycache__/
+# Desktop app: build output and the copy of core/ made at build time
+app/node_modules/
+app/dist/
+app/src/core/
+test/app-e2e/.data/
