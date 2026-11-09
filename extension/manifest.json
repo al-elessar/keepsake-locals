@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "Keepsake – Downloader for Locals",
+  "short_name": "Keepsake",
+  "version": "0.5.0",
+  "description": "Unofficial tool: save videos from Locals communities you belong to, for offline viewing. Not affiliated with Locals or Rumble.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "96": "icons/icon96.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "downloads",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.locals.com/*"
+  ],
+  "action": {
+    "default_title": "Keepsake – Downloader for Locals",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.locals.com/*"
+      ],
+      "js": [
+        "src/page-hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://*.locals.com/*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{789c4ebb-4f1a-44b5-a1a9-3a970f65da1a}",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  }
+}

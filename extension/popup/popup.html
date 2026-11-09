@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Keepsake – Downloader for Locals</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Keepsake <span class="sub">Downloader for Locals</span></h1>
+    <select id="community" title="Community"></select>
+  </header>
+
+  <section id="status">
+    <div class="stat"><span id="count">0</span> videos found <span id="titled" class="muted"></span></div>
+    <div class="stat" id="token">Token: <span id="tokenText">not captured yet</span></div>
+    <div class="row">
+      <button id="findall" class="primary">Find all videos</button>
+      <button id="stopscroll" style="display:none">Stop</button>
+    </div>
+    <div id="scrollmsg" class="muted"></div>
+  </section>
+
+  <section id="help" class="help">
+    <ol>
+      <li>Open the community's <b>Content</b> page and click <b>Find all videos</b> (or scroll to the very bottom yourself).</li>
+      <li>Play <b>any one video</b> for a few seconds, so your access token is captured.</li>
+      <li>Tick the videos you want and download the script.</li>
+    </ol>
+  </section>
+
+  <section id="options">
+    <label>Save to folder
+      <input id="folder" type="text" placeholder="e.g. D:\Videos\Locals (blank = next to the script)">
+    </label>
+    <label class="check"><input id="askFolder" type="checkbox" checked> Choose the folder in a window when the script runs</label>
+    <div class="row">
+      <label>Quality
+        <select id="quality">
+          <option value="">Best</option>
+          <option value="1080">1080p max</option>
+          <option value="720">720p max</option>
+          <option value="480">480p max</option>
+        </select>
+      </label>
+      <label>File names
+        <select id="naming">
+          <option value="date">2026-11-01 Title</option>
+          <option value="number">001 Title</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label>Order
+        <select id="order">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </label>
+      <label>Punctuation in names
+        <select id="nameStyle">
+          <option value="plain">Remove them</option>
+          <option value="lookalike">Keep look-alikes “ ” ’</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <label>Browser cookies
+        <select id="cookies">
+          <option value="none">Don't use</option>
+          <option value="firefox">Firefox</option>
+          <option value="chrome">Chrome</option>
+          <option value="edge">Edge</option>
+          <option value="brave">Brave</option>
+        </select>
+      </label>
+      <label>Parallel pieces
+        <input id="fragments" type="number" min="1" max="16" value="4">
+      </label>
+    </div>
+  </section>
+
+  <section id="pick">
+    <div class="pickhead">
+      <b>Videos</b> <span id="selcount" class="muted"></span>
+    </div>
+    <input id="filter" type="search" placeholder="Search titles…">
+    <div class="row">
+      <button id="selall">All</button>
+      <button id="selnone">None</button>
+      <button id="selshown">Shown</button>
+      <button id="selnew" title="Videos not included in any script you downloaded before">New</button>
+    </div>
+    <ul id="list"></ul>
+    <div class="muted">Tip: hold Shift and click to tick a range.</div>
+  </section>
+
+  <section id="actions">
+    <button id="bat" class="primary">Download Windows script (.bat)</button>
+    <button id="sh">Download Mac/Linux script (.sh)</button>
+    <details id="more">
+      <summary>More tools</summary>
+      <div class="muted">Already downloaded videos named by ID (e.g. "001 v_9c750134-….mp4")? This renames them to the names above.</div>
+      <div class="row">
+        <button id="renbat">Rename script (.bat)</button>
+        <button id="rensh">Rename script (.sh)</button>
+      </div>
+      <div class="row">
+        <button id="copy">Copy video links</button>
+        <button id="debug">Export debug info</button>
+      </div>
+    </details>
+    <button id="clear" class="danger">Clear this community's data</button>
+    <div id="msg" class="muted"></div>
+  </section>
+
+  <footer class="muted">
+    Unofficial – not affiliated with Locals or Rumble. Keepsake only uses your own login,
+    makes no network requests of its own and keeps everything in this browser.
+    Please respect creators: don't share what you download.
+  </footer>
+
+  <script src="generate.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
