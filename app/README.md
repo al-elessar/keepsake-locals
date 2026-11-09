@@ -22,7 +22,7 @@ A standalone Windows app that does everything the browser extension does, **and 
 
 ## How to use
 
-1. **＋ Add** your community: type its name (e.g. `dap2k`) or paste its link.
+1. **＋ Add** your community: type its name (e.g. `example`) or paste its link.
 2. The **Locals window** opens. **Sign in** there if you aren't already.
 3. Back in Keepsake, click **Find all videos**. The Locals window scrolls through the Content page by itself. Click **Also check the Feed** to catch videos posted in ordinary posts.
 4. In the Locals window, **play any video for a few seconds**, so that your access token is picked up. The top bar then shows *Token valid until …*.

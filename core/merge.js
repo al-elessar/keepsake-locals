@@ -18,7 +18,7 @@
   const ID_RE = /^v_[0-9a-f-]{36}$/;
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-  /** The community name is the first part of the host: dap2k.beta.locals.com -> dap2k */
+  /** The community name is the first part of the host: example.beta.locals.com -> example */
   function slugFromHost(host) {
     const slug = String(host || '').split('.')[0];
     return slug && slug !== 'www' && slug !== 'locals' ? slug : null;

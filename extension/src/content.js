@@ -2,8 +2,8 @@
  * Keepsake – Downloader for Locals (unofficial) - content script (isolated world)
  *
  * Receives findings from page-hook.js and keeps them in extension storage,
- * grouped by community (the first part of the host name, e.g. "dap2k" for
- * dap2k.locals.com and dap2k.beta.locals.com).
+ * grouped by community (the first part of the host name, e.g. "example" for
+ * example.locals.com and example.beta.locals.com).
  *
  * The merging and scrolling logic lives in merge.js and autoscroll.js (copied from
  * core/, shared with the desktop app), which load before this file.

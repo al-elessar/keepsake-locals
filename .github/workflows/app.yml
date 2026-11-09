@@ -29,6 +29,9 @@ jobs:
       - name: Install
         working-directory: app
         run: npm ci
+      - name: Download Electron (retried: GitHub downloads sometimes time out)
+        working-directory: app
+        run: for i in 1 2 3 4; do node node_modules/electron/install.js && break; echo "retrying in 20 s"; sleep 20; done
       - name: Unit tests
         working-directory: app
         run: npm run sync && npm test
@@ -46,9 +49,12 @@ jobs:
           node-version: 22
       - name: Build the installer
         working-directory: app
+        shell: bash
         run: |
           npm ci
-          npm run dist
+          for i in 1 2 3 4; do node node_modules/electron/install.js && break; echo "retrying in 20 s"; sleep 20; done
+          for i in 1 2 3; do npm run dist && break; echo "retrying in 20 s"; sleep 20; done
+          ls dist/Keepsake-Setup-*.exe
       - uses: actions/upload-artifact@v4
         with:
           name: Keepsake-Setup-windows

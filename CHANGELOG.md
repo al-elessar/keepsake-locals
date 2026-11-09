@@ -18,7 +18,7 @@
 - The script stops with a clear message if the token in it has expired.
 - Rename script for earlier downloads named by video ID.
 - Videos found only on the Feed are tagged **FEED**, with a tip to run **Find all videos** there too.
-- Optional look-alike punctuation in file names (`Tony “The Barber”`).
+- Optional look-alike punctuation in file names (`Example “quoted” title`).
 
 ## 0.3.x
 - **Find all videos:** automatic scrolling to the end of the page.

@@ -1,6 +1,6 @@
 """Mock Locals community for the end-to-end tests (extension and desktop app).
 
-Serves http://dap2k.beta.locals.com/feed?mode=content (map that host to 127.0.0.1:8765):
+Serves http://example.beta.locals.com/feed?mode=content (map that host to 127.0.0.1:8765):
 5 pages of 20 posts that load as you scroll, from /_server/ responses shaped like the
 real site's. Also serves a small real HLS stream for every video ID, which requires the
 right vt token and Referer (like Locals), so yt-dlp can really download it.
@@ -21,7 +21,7 @@ def page(n):
         vid = 'v_%08x-1111-4222-8333-%012x' % (k, k)
         day = 28 - (k % 28)
         # seroval-like, unquoted keys, title BEFORE nested media, date after
-        recs.append('{id:%d,title:"Mock video %03d",media:{video:"%s",duration:%d},createdAt:"2026-10-%02dT12:00:00Z"}' % (900000 + k, k + 1, vid, 600 + k, day))
+        recs.append('{id:%d,title:"Example video %03d",media:{video:"%s",duration:%d},createdAt:"2026-10-%02dT12:00:00Z"}' % (900000 + k, k + 1, vid, 600 + k, day))
     return '$R[0]=[' + ','.join(recs) + ']'
 
 HTML = '''<!doctype html><html><head><title>Locals mock</title>
@@ -71,7 +71,7 @@ class H(http.server.BaseHTTPRequestHandler):
             name = u.path.rsplit('/', 1)[-1]
             if name == 'source.m3u8':
                 ref = self.headers.get('Referer', '')
-                ok_ref = ref.startswith('http://dap2k.beta.locals.com/')
+                ok_ref = ref.startswith('http://example.beta.locals.com/')
                 if q.get('vt', [''])[0] != TOKEN or not ok_ref or FORBIDDEN in u.path:
                     return self.reply(403, b'Forbidden', 'text/plain')
                 return self.reply(200, MASTER.encode(), 'application/vnd.apple.mpegurl')

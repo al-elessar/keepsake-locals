@@ -45,7 +45,7 @@ async function until(fn, ms, what) {
       args,
       env: Object.assign({}, process.env, {
         KEEPSAKE_TEST_DATA_DIR: path.join(tmp, 'data'),
-        KEEPSAKE_TEST_HOST_RULES: 'MAP dap2k.beta.locals.com 127.0.0.1:8765',
+        KEEPSAKE_TEST_HOST_RULES: 'MAP example.beta.locals.com 127.0.0.1:8765',
         KEEPSAKE_TEST_SCHEME: 'http',
         KEEPSAKE_TEST_HLS_BASE: 'http://127.0.0.1:8765/api/v1/posts/content/hls/'
       })
@@ -59,9 +59,9 @@ async function until(fn, ms, what) {
 
     // 1) Add the community (a pasted link works) - this opens the Locals window
     await win.click('#addCommunity');
-    await win.fill('#addInput', 'https://dap2k.locals.com/feed');
+    await win.fill('#addInput', 'https://example.locals.com/feed');
     await win.click('#addConfirm');
-    await until(async () => (await win.inputValue('#community')) === 'dap2k', 5000, 'community added');
+    await until(async () => (await win.inputValue('#community')) === 'example', 5000, 'community added');
     console.log('community added: OK');
 
     // 2) Find all videos
@@ -73,13 +73,13 @@ async function until(fn, ms, what) {
     console.log('find:', found);
     const rows = await win.$$eval('#list li', (lis) => lis.map((li) => li.querySelector('.title').textContent));
     const dated = await win.$$eval('#list .date', (d) => d.filter((x) => /^2026-10-\d\d$/.test(x.textContent)).length);
-    if (rows.length !== 100 || !rows.every((t) => /^Mock video \d{3}$/.test(t)) || dated !== 100) {
+    if (rows.length !== 100 || !rows.every((t) => /^Example video \d{3}$/.test(t)) || dated !== 100) {
       throw new Error(`expected 100 titled, dated videos, got ${rows.length} (dated ${dated})`);
     }
     console.log('100 videos with titles and dates: OK');
 
     // 3) Token: play a video in the Locals window
-    const locals = app.windows().find((w) => w.url().includes('dap2k.beta.locals.com'));
+    const locals = app.windows().find((w) => w.url().includes('example.beta.locals.com'));
     await locals.evaluate('playOne()');
     await until(async () => /Token valid until/.test(await win.textContent('#chipToken')), 10000, 'token');
     console.log('token captured: OK');
@@ -100,11 +100,11 @@ async function until(fn, ms, what) {
 
     // 5) Download nine videos into a chosen folder
     await app.evaluate((_e, folder) => {
-      global.__keepsake.store.data.folders = { dap2k: folder };
+      global.__keepsake.store.data.folders = { example: folder };
     }, out);
     await win.click('.tab[data-tab="videos"]');
-    await win.selectOption('#community', 'dap2k'); // reload so the folder shows
-    await win.fill('#filter', 'Mock video 00');
+    await win.selectOption('#community', 'example'); // reload so the folder shows
+    await win.fill('#filter', 'Example video 00');
     await win.click('#selShown');
     const label = await win.textContent('#download');
     if (!/Download 9 videos/.test(label)) throw new Error('selection: ' + label);
@@ -113,7 +113,7 @@ async function until(fn, ms, what) {
     await until(() => app.evaluate(() => global.__keepsake.downloader.summary().done === 9), 180000, '9 downloads');
     await shot('app-downloads.png');
     const files = fs.readdirSync(out).filter((f) => f.endsWith('.mp4')).sort();
-    if (files.length !== 9 || !files.every((f) => /^2026-10-\d\d Mock video 00\d\.mp4$/.test(f))) throw new Error('files: ' + files);
+    if (files.length !== 9 || !files.every((f) => /^2026-10-\d\d Example video 00\d\.mp4$/.test(f))) throw new Error('files: ' + files);
     const dur = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path.join(out, files[0])]).toString().trim();
     if (!(Number(dur) > 1.5)) throw new Error('bad video duration ' + dur);
     console.log(`downloaded ${files.length} playable videos (${files[0]}, ${Number(dur).toFixed(1)} s): OK`);
@@ -122,7 +122,7 @@ async function until(fn, ms, what) {
     console.log('list marks the 9 videos as saved: OK');
 
     // 6) Locals refuses a video (HTTP 403): the queue stops with a clear message
-    await win.fill('#filter', 'Mock video 100');
+    await win.fill('#filter', 'Example video 100');
     await win.click('#selShown');
     await win.click('#download');
     await win.click('.tab[data-tab="downloads"]');

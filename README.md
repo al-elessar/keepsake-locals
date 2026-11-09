@@ -19,7 +19,7 @@ Prefer not to run scripts? The **[Keepsake desktop app](app/README.md)** does th
 
 - **Find all videos:** scrolls a community's Content page (or Feed) to the end and collects every video with its title and date.
 - **Pick what you want:** tick boxes, title search, Shift-click ranges, and **New** to select only videos added since your last download.
-- **Tidy file names:** `2026-11-01 Patrick and The 3 Hour Fiasco.mp4`. The names stay the same, so re-running skips anything you already have.
+- **Tidy file names:** `2026-11-01 Example video one.mp4`. The names stay the same, so re-running skips anything you already have.
 - **One-click script:** a Windows `.bat` (or Mac/Linux `.sh`) that opens a folder picker, downloads everything, and ends with a summary such as *"352 done, 5 failed"*. Run it again to retry the failures.
 - **Set-up help:** on Windows, the script offers to fetch yt-dlp and ffmpeg if they're missing.
 - **Rename tool:** renames older downloads named by ID (`001 v_9c75….mp4`) to proper titles.

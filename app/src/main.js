@@ -75,7 +75,7 @@ function communityUrl(slug, page) {
   return `${base}/`;
 }
 
-/** "dap2k", "dap2k.locals.com" or a pasted link -> "dap2k" */
+/** "example", "example.locals.com" or a pasted link -> "example" */
 function parseCommunity(input) {
   let s = String(input || '').trim().toLowerCase();
   if (!s) return null;
@@ -376,7 +376,7 @@ function registerActions() {
 
   handle('addCommunity', (input) => {
     const slug = parseCommunity(input);
-    if (!slug) return { error: 'That doesn\'t look like a Locals community name or link (for example "dap2k" or https://dap2k.locals.com).' };
+    if (!slug) return { error: 'That doesn\'t look like a Locals community name or link (for example "example" or https://example.locals.com).' };
     store.data.known = Array.from(new Set([...(store.data.known || []), slug]));
     store.setOption('lastCommunity', slug);
     return { slug, communities: communityList() };
