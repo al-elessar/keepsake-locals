@@ -397,6 +397,17 @@
     msg('dlMsg', r.warning ? `${text} ${r.warning}` : text, r.warning ? 'warn' : 'ok');
   }
 
+  async function useFirefox(where) {
+    msg(where, 'Looking for your Locals sign-in in Firefox…');
+    const r = await K.importFirefox();
+    if (r.error) {
+      msg(where, r.error, 'warn');
+      return false;
+    }
+    msg(where, `Done: signed in using Firefox (profile "${r.profile}"). The Locals window has been reloaded.`, 'ok');
+    return true;
+  }
+
   async function find(page) {
     if (!current) return;
     scanning = true;
@@ -441,6 +452,15 @@
     $('addInput').addEventListener('keydown', (e) => e.key === 'Enter' && add());
 
     $('openLocals').addEventListener('click', () => K.openLocals(current, 'home'));
+    $('noticeClose').addEventListener('click', () => ($('notice').hidden = true));
+    $('noticeFirefox').addEventListener('click', async () => {
+      if (await useFirefox('noticeText')) setTimeout(() => ($('notice').hidden = true), 6000);
+    });
+    $('welcomeFirefox').addEventListener('click', async () => {
+      $('notice').hidden = false;
+      if (await useFirefox('noticeText')) setTimeout(() => ($('notice').hidden = true), 6000);
+    });
+    $('importFirefox').addEventListener('click', () => useFirefox('signInMsg'));
     $('findContent').addEventListener('click', () => find('content'));
     $('findFeed').addEventListener('click', () => find('feed'));
     $('stopFind').addEventListener('click', () => K.stopFind());
@@ -580,6 +600,11 @@
     });
     K.on('queue', applyQueue);
     K.on('tools', (p) => msg('toolsMsg', p.message || ''));
+    K.on('notice', (p) => {
+      $('noticeText').textContent = p.text;
+      $('noticeText').className = '';
+      $('notice').hidden = false;
+    });
   }
 
   async function init() {

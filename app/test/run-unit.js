@@ -9,6 +9,7 @@ const { Store } = require('../src/store.js');
 const { Tools, parseSums } = require('../src/tools.js');
 const { Downloader } = require('../src/downloader.js');
 const { renameOld } = require('../src/library.js');
+const ff = require('../src/browser-cookies.js');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'keepsake-unit-'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -57,6 +58,43 @@ async function until(fn, ms, what) {
   assert.ok(fs.existsSync(path.join(lib, `002 ${B}.mkv`)), 'existing file is never overwritten');
   assert.ok(fs.existsSync(path.join(lib, `notes ${A}.txt`)), 'only video files are renamed');
   console.log('rename: OK');
+
+  // ---------------------------------------------------------------- Firefox sign-in
+  {
+    const root = path.join(tmp, 'firefox');
+    const prof = path.join(root, 'Profiles', 'abcd.default-release');
+    fs.mkdirSync(prof, { recursive: true });
+    fs.writeFileSync(path.join(root, 'profiles.ini'), '[Profile0]\r\nName=default-release\r\nIsRelative=1\r\nPath=Profiles/abcd.default-release\r\n');
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(prof, 'cookies.sqlite'));
+    db.exec(`CREATE TABLE moz_cookies (id INTEGER PRIMARY KEY, originAttributes TEXT NOT NULL DEFAULT '', name TEXT, value TEXT,
+      host TEXT, path TEXT, expiry INTEGER, lastAccessed INTEGER, creationTime INTEGER, isSecure INTEGER, isHttpOnly INTEGER,
+      inBrowserElement INTEGER DEFAULT 0, sameSite INTEGER DEFAULT 0, rawSameSite INTEGER DEFAULT 0, schemeMap INTEGER DEFAULT 0)`);
+    const future = Math.floor(Date.now() / 1000) + 86400 * 30;
+    const add = db.prepare('INSERT INTO moz_cookies (originAttributes, name, value, host, path, expiry, isSecure, isHttpOnly, sameSite) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    add.run('', 'session', 's1', '.locals.com', '/', future, 1, 1, 1);
+    add.run('', 'pref', 'p1', 'example.beta.locals.com', '/', future * 1000, 1, 0, 0); // newer Firefox: milliseconds
+    add.run('', 'old', 'x', '.locals.com', '/', 1000, 1, 0, 0); // expired
+    add.run('^userContextId=2', 'container', 'x', '.locals.com', '/', future, 1, 0, 0); // a container tab
+    add.run('', 'other', 'x', '.notlocals.com', '/', future, 1, 0, 0); // another site
+    db.close();
+    const profiles = ff.findProfiles([root]);
+    assert.strictEqual(profiles.length, 1);
+    const cookies = ff.readLocalsCookies(profiles[0]);
+    assert.deepStrictEqual(cookies.map((c) => c.name).sort(), ['pref', 'session']);
+    assert.ok(Math.abs(cookies.find((c) => c.name === 'pref').expiry - future) < 1, 'milliseconds converted');
+    const set = [];
+    const fake = { cookies: { set: async (d) => set.push(d), flushStore: async () => {} } };
+    const r2 = await ff.importFromFirefox(fake, [root]);
+    assert.deepStrictEqual(r2, { count: 2, profile: 'abcd.default-release' });
+    const s = set.find((d) => d.name === 'session');
+    assert.strictEqual(s.domain, '.locals.com');
+    assert.strictEqual(s.url, 'https://locals.com/');
+    assert.ok(s.httpOnly && s.secure && s.sameSite === 'lax');
+    assert.ok(!('domain' in set.find((d) => d.name === 'pref')), 'host-only cookie stays host-only');
+    assert.ok((await ff.importFromFirefox(fake, [path.join(tmp, 'nowhere')])).error);
+    console.log('Firefox sign-in: OK');
+  }
 
   // ---------------------------------------------------------------- download queue (with a stand-in yt-dlp)
   if (process.platform === 'win32') {

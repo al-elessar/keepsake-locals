@@ -20,6 +20,7 @@ const { Store } = require('./store.js');
 const { Tools } = require('./tools.js');
 const { Downloader } = require('./downloader.js');
 const { renameOld } = require('./library.js');
+const { importFromFirefox } = require('./browser-cookies.js');
 
 // ------------------------------------------------------------------ test hooks
 // Only used by the automated tests (a mock Locals server on this computer).
@@ -153,6 +154,42 @@ function mergeInto(slug, host, data, kind) {
   }
 }
 
+// Google (and Apple) refuse to sign people in inside apps. Rather than show their error
+// page, stop there and explain how to reuse the Firefox sign-in instead.
+const BLOCKED_SIGN_IN = /^https:\/\/(accounts\.google\.com|appleid\.apple\.com)\//;
+
+function blockedSignIn(url) {
+  if (!BLOCKED_SIGN_IN.test(String(url))) return false;
+  const who = /apple/.test(url) ? 'Apple' : 'Google';
+  send('notice', {
+    kind: 'browser-sign-in',
+    text: `${who} doesn't allow signing in inside apps. Sign in to Locals in Firefox as usual, then click "Use my Firefox sign-in": Keepsake will reuse that sign-in.`
+  });
+  if (mainWin && !mainWin.isDestroyed()) mainWin.focus();
+  return true;
+}
+
+function guardLocalsContents(wc) {
+  wc.on('will-navigate', (e, url) => {
+    if (!/^https?:\/\//.test(url) || blockedSignIn(url)) e.preventDefault();
+  });
+  wc.on('will-redirect', (e, url) => {
+    if (blockedSignIn(url)) e.preventDefault();
+  });
+  wc.setWindowOpenHandler(({ url }) => {
+    if (!/^https?:\/\//.test(url) || blockedSignIn(url)) return { action: 'deny' };
+    // Other sign-in pop-ups stay in the app (same session); nothing else gets the Keepsake preload.
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
+        webPreferences: { partition: PARTITION, sandbox: true, contextIsolation: true, nodeIntegration: false }
+      }
+    };
+  });
+  wc.on('did-create-window', (child) => guardLocalsContents(child.webContents));
+}
+
 function ensureLocalsWindow() {
   if (localsWin && !localsWin.isDestroyed()) return localsWin;
   localsWin = new BrowserWindow({
@@ -171,20 +208,7 @@ function ensureLocalsWindow() {
     }
   });
   const wc = localsWin.webContents;
-  wc.setWindowOpenHandler(({ url }) => {
-    if (!/^https?:\/\//.test(url)) return { action: 'deny' };
-    // Sign-in pop-ups stay in the app (same session); nothing else gets the Keepsake preload.
-    return {
-      action: 'allow',
-      overrideBrowserWindowOptions: {
-        autoHideMenuBar: true,
-        webPreferences: { partition: PARTITION, sandbox: true, contextIsolation: true, nodeIntegration: false }
-      }
-    };
-  });
-  wc.on('will-navigate', (e, url) => {
-    if (!/^https?:\/\//.test(url)) e.preventDefault();
-  });
+  guardLocalsContents(wc);
   const report = () => send('locals', { open: true, url: wc.getURL() });
   wc.on('did-navigate', report);
   wc.on('did-navigate-in-page', report);
@@ -519,6 +543,15 @@ function registerActions() {
     if (r.canceled || !r.filePath) return null;
     fs.writeFileSync(r.filePath, LVS.makeDebug(state, 'app ' + VERSION));
     return r.filePath;
+  });
+
+  handle('importFirefox', async () => {
+    const r = await importFromFirefox(localsSession);
+    if (!r.error) {
+      if (localsWin && !localsWin.isDestroyed()) localsWin.webContents.reload();
+      else openLocals(store.options.lastCommunity, 'home');
+    }
+    return r;
   });
 
   handle('signOut', async () => {

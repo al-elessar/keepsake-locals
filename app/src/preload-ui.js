@@ -27,6 +27,7 @@ const ACTIONS = [
   'renameOld',
   'exportScript',
   'exportDebug',
+  'importFirefox',
   'signOut',
   'openExternal'
 ];

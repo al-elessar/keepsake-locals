@@ -1,7 +1,7 @@
 {
   "name": "keepsake-locals-app",
   "productName": "Keepsake",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keepsake – Downloader for Locals (unofficial desktop app). Not affiliated with Locals or Rumble.",
   "author": "Elessar (al-elessar)",
   "license": "MIT",

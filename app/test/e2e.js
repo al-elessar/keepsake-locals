@@ -33,6 +33,18 @@ async function until(fn, ms, what) {
   execFileSync('node', [path.join(APP, '..', 'scripts', 'sync-core.js')]);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'keepsake-e2e-'));
   const out = path.join(tmp, 'Videos');
+  // A Firefox profile that is signed in to Locals (a session cookie for the mock site)
+  const ffRoot = path.join(tmp, 'firefox');
+  const prof = path.join(ffRoot, 'Profiles', 'test.default-release');
+  fs.mkdirSync(prof, { recursive: true });
+  {
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(path.join(prof, 'cookies.sqlite'));
+    db.exec("CREATE TABLE moz_cookies (id INTEGER PRIMARY KEY, originAttributes TEXT NOT NULL DEFAULT '', name TEXT, value TEXT, host TEXT, path TEXT, expiry INTEGER, isSecure INTEGER, isHttpOnly INTEGER, sameSite INTEGER)");
+    db.prepare('INSERT INTO moz_cookies (name, value, host, path, expiry, isSecure, isHttpOnly, sameSite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .run('keepsake_test_session', 'from-firefox', '.locals.com', '/', Math.floor(Date.now() / 1000) + 86400, 0, 1, 1);
+    db.close();
+  }
   const mock = spawn('python3', [MOCK], { stdio: 'inherit' });
   await sleep(2500);
   let app;
@@ -47,7 +59,8 @@ async function until(fn, ms, what) {
         KEEPSAKE_TEST_DATA_DIR: path.join(tmp, 'data'),
         KEEPSAKE_TEST_HOST_RULES: 'MAP example.beta.locals.com 127.0.0.1:8765',
         KEEPSAKE_TEST_SCHEME: 'http',
-        KEEPSAKE_TEST_HLS_BASE: 'http://127.0.0.1:8765/api/v1/posts/content/hls/'
+        KEEPSAKE_TEST_HLS_BASE: 'http://127.0.0.1:8765/api/v1/posts/content/hls/',
+        KEEPSAKE_TEST_FIREFOX_DIR: ffRoot
       })
     });
     const win = await app.firstWindow();
@@ -63,6 +76,20 @@ async function until(fn, ms, what) {
     await win.click('#addConfirm');
     await until(async () => (await win.inputValue('#community')) === 'example', 5000, 'community added');
     console.log('community added: OK');
+
+    // 1b) "Sign in with Google" is stopped with an explanation; the Firefox sign-in is reused instead
+    const localsWin = await until(async () => app.windows().find((w) => w.url().includes('example.beta.locals.com')), 10000, 'Locals window');
+    await localsWin.waitForSelector('#who');
+    if ((await localsWin.textContent('#who')) !== 'not signed in') throw new Error('mock should start signed out');
+    await localsWin.evaluate(() => document.getElementById('google').click()); // the navigation is cancelled on purpose
+    await until(async () => (await win.isVisible('#notice')) && /Google doesn't allow/.test(await win.textContent('#noticeText')), 10000, 'Google notice');
+    if (/accounts\.google\.com/.test(localsWin.url())) throw new Error('Google page should not open');
+    console.log('Google sign-in stopped with an explanation: OK');
+    await shot('app-google-notice.png');
+    await win.click('#noticeFirefox');
+    await until(async () => /Done: signed in using Firefox/.test(await win.textContent('#noticeText')), 10000, 'Firefox import');
+    await until(async () => (await localsWin.textContent('#who').catch(() => '')) === 'signed in', 10000, 'signed-in page');
+    console.log('Firefox sign-in reused, Locals window signed in: OK');
 
     // 2) Find all videos
     await win.click('#findContent');

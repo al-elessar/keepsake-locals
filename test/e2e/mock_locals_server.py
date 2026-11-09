@@ -26,7 +26,8 @@ def page(n):
 
 HTML = '''<!doctype html><html><head><title>Locals mock</title>
 <style>body{margin:0;font:14px sans-serif} #s{height:100vh;overflow-y:auto} .c{height:220px;border-bottom:1px solid #ccc;padding:8px}</style></head>
-<body><div id="s"><div id="list"></div><div id="sentinel">loading…</div></div>
+<body><div id="who">%s</div><a id="google" href="https://accounts.google.com/o/oauth2/v2/auth?client_id=mock">Sign in with Google</a>
+<div id="s"><div id="list"></div><div id="sentinel">loading…</div></div>
 <script>
 let next = 0, busy = false;
 async function more() {
@@ -40,7 +41,7 @@ async function more() {
 const io = new IntersectionObserver((e) => { if (e[0].isIntersecting) more(); }, { root: document.getElementById('s') });
 io.observe(document.getElementById('sentinel'));
 window.playOne = () => { const x = new XMLHttpRequest(); x.open('GET', '/api/v1/posts/content/hls/v_00000000-1111-4222-8333-000000000000/source.m3u8?vt=%s'); x.send(); };
-</script></body></html>''' % (PAGES, PER, PAGES, TOKEN)
+</script></body></html>'''.replace('%s</div>', '%%s</div>', 1) % (PAGES, PER, PAGES, TOKEN)
 
 # A two-second test video, cut into two HLS pieces (made once, with ffmpeg, if it is installed).
 HLS_DIR = None
@@ -80,7 +81,8 @@ class H(http.server.BaseHTTPRequestHandler):
                 with open(os.path.join(HLS_DIR, name), 'rb') as f:
                     return self.reply(200, f.read(), ct)
             return self.reply(404, b'Not found', 'text/plain')
-        return self.reply(200, HTML.encode(), 'text/html',
+        who = 'signed in' if 'keepsake_test_session=from-firefox' in self.headers.get('Cookie', '') else 'not signed in'
+        return self.reply(200, (HTML % who).encode(), 'text/html',
                           {'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'"})
 
 http.server.ThreadingHTTPServer(('127.0.0.1', 8765), H).serve_forever()

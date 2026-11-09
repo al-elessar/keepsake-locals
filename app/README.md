@@ -10,6 +10,7 @@ A standalone Windows app that does everything the browser extension does, **and 
 ## Your password and your sign-in
 
 - You sign in on **Locals' own sign-in page**, shown in the app's *Locals window*, exactly as in a browser. **Keepsake never sees, reads or stores your password.**
+- **Signed up with Google (or Apple)?** Google and Apple don't allow signing in inside apps, and show *"Couldn't sign you in"*. Instead, sign in to Locals in **Firefox** as usual, then click **Use my Firefox sign-in** in Keepsake. Keepsake copies only the Locals sign-in (the locals.com cookies) from your Firefox profile, the same thing yt-dlp's "browser cookies" option does. It never sees your password or your Google account.
 - After you sign in, the **session** (the cookies Locals sets) is kept only on your computer, in the app's data folder, just as a browser keeps it. **Sign out of Locals** in *Tools & settings* deletes it.
 - Your personal **video token** (picked up when you play a video) is kept in the same place. It is sent only to Locals, when downloading.
 - The app contacts only Locals (as your browser would) and GitHub (once, to fetch yt-dlp and ffmpeg). There is no server, analytics or tracking.
@@ -23,7 +24,7 @@ A standalone Windows app that does everything the browser extension does, **and 
 ## How to use
 
 1. **＋ Add** your community: type its name (e.g. `example`) or paste its link.
-2. The **Locals window** opens. **Sign in** there if you aren't already.
+2. The **Locals window** opens. **Sign in** there if you aren't already. If you sign in to Locals with Google, sign in in Firefox instead and click **Use my Firefox sign-in** (see above).
 3. Back in Keepsake, click **Find all videos**. The Locals window scrolls through the Content page by itself. Click **Also check the Feed** to catch videos posted in ordinary posts.
 4. In the Locals window, **play any video for a few seconds**, so that your access token is picked up. The top bar then shows *Token valid until …*.
 5. Tick the videos you want, **Choose…** a folder, and click **Download**.
@@ -40,6 +41,7 @@ The first time you download, Keepsake fetches **yt-dlp** and **ffmpeg** from the
 ### If something goes wrong
 
 - **"Locals refused access (HTTP 403)"**: your token has probably expired. Play any video in the Locals window, then click **Retry failed** and **Resume all**.
+- **"Couldn't sign you in" (Google):** use **Use my Firefox sign-in**, as described above.
 - **No videos found:** make sure you are signed in, in the Locals window, and that you can see the videos there.
 - **Save debug info** creates a file *without* your token, which you can attach to a bug report.
 

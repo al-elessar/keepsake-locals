@@ -1,6 +1,9 @@
 # Changelog
 
-## Desktop app 0.1.0 (beta, Windows) – unreleased
+## Desktop app 0.1.1 (beta, Windows) – unreleased
+- **Use my Firefox sign-in:** Google doesn't allow signing in inside apps, so members who sign in to Locals with Google can sign in in Firefox and Keepsake reuses that sign-in (only the locals.com cookies are copied).
+
+## Desktop app 0.1.0 (beta, Windows)
 - New standalone app in `app/`: sign in on Locals' own page inside the app, **Find all videos**, tick and **Download**, with no script step.
 - Download queue with progress, pause/resume, automatic retries, and a clear stop when the token has expired (HTTP 403).
 - yt-dlp and ffmpeg fetched on first use from their official releases and checked against their published checksums.

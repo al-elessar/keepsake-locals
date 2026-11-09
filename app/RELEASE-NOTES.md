@@ -1,6 +1,6 @@
 **First beta of the Keepsake desktop app for Windows.** It does everything the browser extension does, and runs the downloads itself: no script needed.
 
-- Sign in on Locals' own page inside the app. Keepsake never sees your password; only the session is kept on your computer.
+- Sign in on Locals' own page inside the app, or, if you use Google to sign in, reuse your Firefox sign-in with one click. Keepsake never sees your password; only the session is kept on your computer.
 - **Find all videos** on a community's Content page and Feed, with titles and dates.
 - Tick the videos you want and **Download**, with progress, pause/resume, automatic retries, and a clear message if your token has expired.
 - yt-dlp and ffmpeg are fetched on first use from their official GitHub pages, and checked against their checksums.

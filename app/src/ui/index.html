@@ -33,6 +33,12 @@
     <button class="tab" data-tab="settings" role="tab">Tools &amp; settings <span id="tabToolsWarn" class="badge warn" hidden>!</span></button>
   </nav>
 
+  <div id="notice" class="notice" hidden>
+    <span id="noticeText"></span>
+    <button id="noticeFirefox" class="primary">Use my Firefox sign-in</button>
+    <button id="noticeClose" class="ghost" title="Close">✕</button>
+  </div>
+
   <!-- ====================================================== add community -->
   <div id="addPanel" class="panel add" hidden>
     <label>Community name or link
@@ -50,7 +56,8 @@
         <h2>Getting started</h2>
         <ol>
           <li><b>Add your community</b> with <b>＋ Add</b> at the top (its name is the first part of its web address, such as <i>example</i> in example.locals.com).</li>
-          <li><b>Sign in to Locals</b> in the Locals window, on Locals' own page. Keepsake never sees your password; it only keeps the signed-in session on this computer, as a browser would.</li>
+          <li><b>Sign in to Locals</b> in the Locals window, on Locals' own page. Keepsake never sees your password; it only keeps the signed-in session on this computer, as a browser would.
+            <br><b>Sign in with Google?</b> Google doesn't allow signing in inside apps. Sign in to Locals in <b>Firefox</b> instead, then click <button id="welcomeFirefox" class="small">Use my Firefox sign-in</button></li>
           <li>Click <b>Find all videos</b>, then <b>play any video for a few seconds</b> in the Locals window so that your access token is picked up.</li>
           <li>Tick the videos you want, choose a folder and click <b>Download</b>.</li>
         </ol>
@@ -181,6 +188,16 @@
           <button id="exportDebug">Save debug info</button>
         </div>
         <div id="moreMsg" class="muted"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Sign-in</h2>
+        <p class="muted">Signed in to Locals with Google or Apple? They don't allow signing in inside apps. Sign in to Locals in <b>Firefox</b> as usual,
+          then click below: Keepsake copies only the Locals sign-in (the locals.com cookies) from Firefox. It never sees your password.</p>
+        <div class="row">
+          <button id="importFirefox" class="primary">Use my Firefox sign-in</button>
+          <span id="signInMsg" class="muted"></span>
+        </div>
       </div>
 
       <div class="panel">
