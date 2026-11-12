@@ -1,0 +1,22 @@
+# Once a month, GitHub proposes updates for the desktop app's components (above all
+# Electron, the built-in browser engine, which gets regular security fixes) and for the
+# build workflow's actions. Each arrives as one pull request; the tests and builds run
+# on it automatically before it is merged.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: monthly
+    groups:
+      app-components:
+        patterns: ['*']
+    open-pull-requests-limit: 1
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      workflow-actions:
+        patterns: ['*']
+    open-pull-requests-limit: 1

@@ -36,6 +36,8 @@
   }
 
   const state = () => (comm ? comm.state : null);
+  // "8 May 2027": unambiguous wherever the reader is from
+  const longDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const selected = () => {
     const s = state();
     return s ? s.order.filter((id) => !excluded.has(id)) : [];
@@ -110,12 +112,12 @@
     } else if (s && s.token) {
       const exp = LVS.decodeTokenExpiry(s.token);
       if (exp && exp.getTime() < Date.now()) {
-        chip.textContent = `Token expired ${exp.toLocaleDateString('en-GB')}`;
+        chip.textContent = `Token expired ${longDate(exp)}`;
         chip.className = 'chip warn';
         help.textContent = 'Your video token has expired. In the Locals window, play any video for a few seconds to renew it.';
         help.hidden = false;
       } else {
-        chip.textContent = exp ? `Token valid until ${exp.toLocaleDateString('en-GB')}` : 'Token captured';
+        chip.textContent = exp ? `Token valid until ${longDate(exp)}` : 'Token captured';
         chip.className = 'chip ok';
       }
     } else {

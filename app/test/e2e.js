@@ -88,6 +88,15 @@ async function until(fn, ms, what) {
     await until(async () => (await win.isVisible('#notice')) && /Google doesn't allow/.test(await win.textContent('#noticeText')), 10000, 'Google notice');
     if (/accounts\.google\.com/.test(localsWin.url())) throw new Error('Google page should not open');
     console.log('Google sign-in stopped with an explanation: OK');
+
+    // 1a) Links to other sites open in the normal browser, not inside the app
+    const windowsBefore = app.windows().length;
+    await localsWin.evaluate(() => document.getElementById('ext').click());
+    await localsWin.evaluate(() => document.getElementById('extpopup').click());
+    const opened = await until(() => app.evaluate(() => global.__keepsake.openedExternally.length === 2 && global.__keepsake.openedExternally), 5000, 'external links');
+    if (!/from-a-post/.test(opened[0]) || !/new-tab/.test(opened[1])) throw new Error('external: ' + opened);
+    if (!/example\.beta\.locals\.com/.test(localsWin.url()) || app.windows().length !== windowsBefore) throw new Error('external link opened inside the app');
+    console.log('links to other sites open in the normal browser: OK');
     await shot('app-google-notice.png');
     await win.click('#noticeFirefox');
     await until(async () => /Done: signed in using Firefox/.test(await win.textContent('#noticeText')), 10000, 'Firefox import');

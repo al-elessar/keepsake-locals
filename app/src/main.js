@@ -172,16 +172,37 @@ function blockedSignIn(url) {
   return true;
 }
 
+// Pages that belong in the Locals window (Locals itself, and Rumble, which owns it and may
+// handle sign-in). Links to anywhere else open in the member's normal browser instead.
+const IN_APP = /^https?:\/\/([a-z0-9-]+\.)*(locals\.com|rumble\.com)(:\d+)?(\/|$)/i;
+const openedExternally = []; // for the automated tests
+
+function openInBrowser(url) {
+  if (!/^https:\/\//.test(url)) return;
+  if (TEST.dataDir) openedExternally.push(url);
+  else shell.openExternal(url);
+}
+
 function guardLocalsContents(wc) {
   wc.on('will-navigate', (e, url) => {
-    if (!/^https?:\/\//.test(url) || blockedSignIn(url)) e.preventDefault();
+    if (!/^https?:\/\//.test(url) || blockedSignIn(url)) {
+      e.preventDefault();
+    } else if (!IN_APP.test(url)) {
+      e.preventDefault();
+      openInBrowser(url);
+    }
   });
   wc.on('will-redirect', (e, url) => {
     if (blockedSignIn(url)) e.preventDefault();
   });
   wc.setWindowOpenHandler(({ url }) => {
     if (!/^https?:\/\//.test(url) || blockedSignIn(url)) return { action: 'deny' };
-    // Other sign-in pop-ups stay in the app (same session); nothing else gets the Keepsake preload.
+    if (!IN_APP.test(url)) {
+      // e.g. a YouTube link in a post: open it in the normal browser, not with the Locals session
+      openInBrowser(url);
+      return { action: 'deny' };
+    }
+    // Locals/Rumble pop-ups (such as sign-in) stay in the app; they don't get the Keepsake preload.
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
@@ -291,7 +312,7 @@ function prepare(item) {
   const exp = LVS.decodeTokenExpiry(state.token);
   if (exp && exp.getTime() < Date.now()) {
     throw new Error(
-      `Your video token for ${item.slug} expired on ${exp.toLocaleDateString()}. In the Locals window, play any video for a few seconds, then click "Resume all".`
+      `Your video token for ${item.slug} expired on ${exp.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. In the Locals window, play any video for a few seconds, then click "Resume all".`
     );
   }
   return {
@@ -319,7 +340,8 @@ async function cookies() {
 }
 
 function removeCookieFile() {
-  if (cookieFile) fs.rmSync(cookieFile, { force: true });
+  // Also clears a file left behind if the app ever stopped unexpectedly mid-download.
+  fs.rmSync(cookieFile || path.join(app.getPath('userData'), 'yt-dlp-cookies.txt'), { force: true });
   cookieFile = null;
 }
 
@@ -615,6 +637,7 @@ app.whenReady().then(() => {
       notifyCommunity(q.slug);
     }
   });
+  removeCookieFile(); // from an earlier run that didn't finish cleanly
   setupLocalsSession();
   registerActions();
   createMainWindow();
@@ -622,7 +645,7 @@ app.whenReady().then(() => {
     updateState = s;
     send('update', Object.assign({ current: VERSION }, s));
   });
-  if (TEST.dataDir) global.__keepsake = { store, tools, downloader };
+  if (TEST.dataDir) global.__keepsake = { store, tools, downloader, openedExternally };
 });
 
 app.on('before-quit', () => {

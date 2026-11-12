@@ -17,7 +17,7 @@ A standalone app for **Windows, Mac and Linux** that does everything the browser
 
 ## Install
 
-Download the file for your computer from the latest **Keepsake desktop app** release on the [releases page](../../../releases).
+Download the file for your computer from the newest **Keepsake desktop app** release on the [releases page](https://github.com/al-elessar/keepsake-locals/releases) (the extension's releases are listed there too).
 
 The app isn't signed with a paid code-signing certificate, so each system warns you the first time. This is expected for small open-source apps.
 
@@ -40,6 +40,8 @@ The app checks for a new version when it starts and every few hours.
 - **Mac:** you'll see a notice with a **Download** link. Install it the same way as the first time. (macOS only lets apps signed with a paid Apple certificate update themselves.)
 
 Unfinished downloads carry on after an update: click **Resume all**.
+
+Links to other websites inside the Locals window open in your normal browser, so only Locals' own pages run inside Keepsake.
 
 ## How to use
 

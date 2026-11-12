@@ -33,6 +33,7 @@ def page(n):
 HTML = '''<!doctype html><html><head><title>Locals mock</title>
 <style>body{margin:0;font:14px sans-serif} #s{height:100vh;overflow-y:auto} .c{height:220px;border-bottom:1px solid #ccc;padding:8px}</style></head>
 <body><div id="who">%s</div><a id="google" href="https://accounts.google.com/o/oauth2/v2/auth?client_id=mock">Sign in with Google</a>
+<a id="ext" href="https://example.org/from-a-post">A link in a post</a> <a id="extpopup" href="https://example.org/new-tab" target="_blank">Opens a new tab</a>
 <div id="s"><div id="list"></div><div id="sentinel">loading…</div></div>
 <script>
 let next = 0, busy = false;

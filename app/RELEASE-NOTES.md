@@ -1,3 +1,5 @@
+**New in 0.2.1:** links to other sites in the Locals window now open in your normal browser, and a small privacy tidy-up. Installed copies on Windows and Linux update themselves.
+
 **Keepsake desktop app, beta, for Windows, Mac and Linux.** It does everything the browser extension does, and runs the downloads itself: no script needed.
 
 - Sign in on Locals' own page inside the app, or, if you use Google to sign in, reuse your Firefox sign-in with one click. Keepsake never sees your password; only the session is kept on your computer.

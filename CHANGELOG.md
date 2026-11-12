@@ -1,5 +1,10 @@
 # Changelog
 
+## Desktop app 0.2.1 (beta)
+- Links to other sites in the Locals window (e.g. a YouTube link in a post) open in your normal browser instead of inside Keepsake.
+- Tidies up the temporary sign-in file for yt-dlp if the app ever stopped unexpectedly during a download.
+- Monthly automatic proposals to update the app's components (including Electron's security fixes).
+
 ## Desktop app 0.2.0 (beta) – 12 November 2026
 - **Mac and Linux** versions (Mac: .dmg for Apple silicon and Intel; Linux: AppImage), built by GitHub Actions alongside Windows.
 - **Automatic updates** on Windows and Linux; a notice with a download link on Mac.

@@ -43,6 +43,10 @@ File names are cleaned so they are safe on Windows, and so that `%`, `!`, `&` an
 - The rename script uses unquoted wildcards (`*v_<id>*.mp4`), checks the folder exists before `cd /d`, and counts a rename only if the new file exists.
 - File names can contain non-English characters. The script switches the console to UTF-8 (`chcp 65001`), which Windows 10 and 11 support.
 
+## The desktop app
+
+The app (`app/`, Electron) uses the same code from `core/`: the page hook is put into the real Locals page in the app's Locals window (a sandboxed window with its own saved session), the findings are merged and stored as in the extension, and "Find all videos" uses the same scrolling loop. Instead of writing a script, it runs yt-dlp itself, once per video, and reads its progress. See [app/README.md](../app/README.md).
+
 ## Known gaps
 
 - Titles are confirmed on one live community. Dates have only been tested against mock data, so check them on the live site. Use **Export debug info**, which removes the token, and open an issue with the file if they're wrong.
