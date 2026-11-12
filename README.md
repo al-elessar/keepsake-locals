@@ -1,4 +1,4 @@
-# Keepsake – Downloader for Locals
+# Keepsake – Downloader for Locals (Rumble)
 
 <img src="docs/icon/icon.svg" width="64" align="right" alt="">
 
