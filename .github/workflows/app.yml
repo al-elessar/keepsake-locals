@@ -30,8 +30,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Install ffmpeg (used by the mock site and the downloads)
@@ -74,12 +74,12 @@ jobs:
       # also for pull-request builds; without it, Apple-silicon Macs call the app "damaged".
       CSC_FOR_PULL_REQUEST: 'true'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Cache Electron downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ${{ matrix.cache }}
@@ -96,7 +96,7 @@ jobs:
           for i in 1 2 3 4 5 6; do node node_modules/electron/install.js && break; echo "retrying in 30 s"; sleep 30; done
           for i in 1 2 3 4 5 6 7 8; do ${{ matrix.command }} && break; echo "retrying in 30 s"; sleep 30; done
           ls -la dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Keepsake-${{ matrix.name }}
           path: |
@@ -105,18 +105,35 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: startsWith(github.ref, 'refs/tags/app-v') || (github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main')
+    # Runs after every build: gathers the files and rehearses the release, so a problem
+    # shows up straight away rather than when publishing. Only publishes for app-v* tags,
+    # or "Run workflow" on main with "Publish a release" ticked.
     needs: build
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      PUBLISH: ${{ startsWith(github.ref, 'refs/tags/app-v') || (github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main') }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
+      - name: Check the release files
+        run: |
+          v=$(node -p "require('./app/package.json').version")
+          ls -la dist
+          for f in "Keepsake-Setup-$v.exe" "Keepsake-$v-linux-x86_64.AppImage" \
+                   "Keepsake-$v-mac-arm64.dmg" "Keepsake-$v-mac-x64.dmg" "Keepsake-$v-mac-arm64.zip" "Keepsake-$v-mac-x64.zip" \
+                   latest.yml latest-mac.yml latest-linux.yml; do
+            [ -s "dist/$f" ] || { echo "Missing: $f"; exit 1; }
+          done
+          # Rehearse the update feed on a copy
+          cp -r dist /tmp/feed && node app/scripts/update-feed.js /tmp/feed "app-v$v"
+          grep -q "releases/download/app-v$v/Keepsake-Setup-$v.exe" /tmp/feed/latest.yml
+          echo "All release files present for $v; publishing: $PUBLISH"
       - name: Work out the release name
+        if: env.PUBLISH == 'true'
         run: |
           v=$(node -p "require('./app/package.json').version")
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
@@ -128,11 +145,13 @@ jobs:
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
       - name: Publish the release
+        if: env.PUBLISH == 'true'
         run: |
           gh release create "$TAG" dist/Keepsake-* --target "$GITHUB_SHA" \
             --prerelease --title "Keepsake desktop app ${TAG#app-v}" \
             --notes-file app/RELEASE-NOTES.md
       - name: Update the feed that installed apps check
+        if: env.PUBLISH == 'true'
         run: |
           node app/scripts/update-feed.js dist "$TAG"
           gh release view app-updates >/dev/null 2>&1 || gh release create app-updates --prerelease \

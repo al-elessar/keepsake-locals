@@ -20,3 +20,6 @@ updates:
       workflow-actions:
         patterns: ['*']
     open-pull-requests-limit: 1
+#
+# Note: the update proposals are applied by a commit under the owner's name rather than
+# merged directly, so the repository keeps a single author; the bot's PR then closes.
