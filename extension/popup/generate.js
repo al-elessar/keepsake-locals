@@ -1,3 +1,4 @@
+/* GENERATED from core/generate.js by scripts/sync-core.js - edit core/generate.js, not this copy. */
 /*
  * Keepsake – Downloader for Locals (unofficial) - script generation
  * Pure functions, shared by the popup and the tests.

@@ -1,3 +1,4 @@
+/* GENERATED from core/page-hook.js by scripts/sync-core.js - edit core/page-hook.js, not this copy. */
 /*
  * Keepsake – Downloader for Locals (unofficial) - page hook
  *
@@ -183,7 +184,7 @@
     const vt = text.match(VT_RE);
     if (vt) setToken(vt[1]);
     if (!text.includes('v_')) return;
-    // Raw text first: this keeps escaped quotes inside titles (Tony \"The Barber\") intact.
+    // Raw text first: this keeps escaped quotes inside titles (Example \"quoted\" title) intact.
     let changed = scanPass(text);
     // JSON stored inside a string (\"title\":\"x\") is only readable once unescaped.
     if (text.includes('\\"')) changed = scanPass(normalise(text)) || changed;

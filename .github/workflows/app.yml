@@ -1,0 +1,125 @@
+name: Desktop app
+
+# 1. Tests the app on Linux (unit tests + end-to-end test against the mock Locals site).
+# 2. Builds it on Windows, macOS and Linux. Every run attaches the installers to the run
+#    (Actions tab -> the run -> Artifacts).
+# 3. For tags named app-v* (e.g. app-v0.2.0): publishes a GitHub release with the
+#    installers, and updates the "app-updates" release that installed apps check.
+
+on:
+  push:
+    branches: [main]
+    tags: ['app-v*']
+  pull_request:
+    paths: ['app/**', 'core/**', 'scripts/**', 'test/e2e/**', '.github/workflows/app.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install ffmpeg (used by the mock site and the downloads)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg xvfb
+      - name: Install
+        working-directory: app
+        run: npm ci
+      - name: Download Electron (retried, as GitHub downloads sometimes time out)
+        working-directory: app
+        run: for i in 1 2 3 4 5 6; do node node_modules/electron/install.js && break; echo "retrying in 30 s"; sleep 30; done
+      - name: Unit tests
+        working-directory: app
+        run: npm run sync && npm test
+      - name: End-to-end test (mock Locals site, real yt-dlp)
+        working-directory: app
+        run: xvfb-run -a npm run test:e2e
+
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            command: npm run dist
+            cache: ~/AppData/Local/electron/Cache
+          - os: macos-latest
+            name: mac
+            command: npm run dist:mac
+            cache: ~/Library/Caches/electron
+          - os: ubuntu-latest
+            name: linux
+            command: npm run dist:linux
+            cache: ~/.cache/electron
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false' # no paid signing certificates (see app/README.md)
+      # Mac: always apply the free "ad-hoc" signature (no certificate or secret involved),
+      # also for pull-request builds; without it, Apple-silicon Macs call the app "damaged".
+      CSC_FOR_PULL_REQUEST: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cache Electron downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ matrix.cache }}
+            ~/AppData/Local/electron-builder/Cache
+            ~/Library/Caches/electron-builder
+            ~/.cache/electron-builder
+          key: electron-${{ matrix.name }}-${{ hashFiles('app/package-lock.json') }}
+      - name: Build
+        working-directory: app
+        shell: bash
+        run: |
+          npm ci
+          # GitHub downloads sometimes time out; finished pieces are kept, so each try gets further.
+          for i in 1 2 3 4 5 6; do node node_modules/electron/install.js && break; echo "retrying in 30 s"; sleep 30; done
+          for i in 1 2 3 4 5 6 7 8; do ${{ matrix.command }} && break; echo "retrying in 30 s"; sleep 30; done
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Keepsake-${{ matrix.name }}
+          path: |
+            app/dist/Keepsake-*
+            app/dist/latest*.yml
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/app-v')
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Check the tag matches the app version
+        run: |
+          v=$(node -p "require('./app/package.json').version")
+          [ "$GITHUB_REF_NAME" = "app-v$v" ] || { echo "Tag $GITHUB_REF_NAME does not match app version $v"; exit 1; }
+      - name: Publish the release
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/Keepsake-* \
+            --prerelease --title "Keepsake desktop app ${GITHUB_REF_NAME#app-v}" \
+            --notes-file app/RELEASE-NOTES.md
+      - name: Update the feed that installed apps check
+        run: |
+          node app/scripts/update-feed.js dist "$GITHUB_REF_NAME"
+          gh release view app-updates >/dev/null 2>&1 || gh release create app-updates --prerelease \
+            --title "App update feed (used by the desktop app – please keep)" \
+            --notes "Installed copies of the Keepsake desktop app check these files for updates. Please don't delete this release. Downloads are on the app-v… releases."
+          gh release upload app-updates dist/latest*.yml --clobber

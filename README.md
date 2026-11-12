@@ -2,7 +2,7 @@
 
 <img src="docs/icon/icon.svg" width="64" align="right" alt="">
 
-A browser extension for **Firefox and Chrome** that lets members of a [Locals](https://locals.com) community save that community's videos to their own computer for offline viewing.
+A browser extension for **Firefox and Chrome**, and a **desktop app for Windows, Mac and Linux** (beta), that let members of a [Locals](https://locals.com) community save that community's videos to their own computer for offline viewing.
 
 > **Unofficial.** Keepsake is not affiliated with, endorsed by or supported by Locals or Rumble.
 > It only works with videos your own account can already watch. Please respect creators: don't share or re-upload what you download.
@@ -11,11 +11,15 @@ Keepsake doesn't download anything itself and contains no content. It reads the 
 
 <p align="center"><img src="docs/screenshots/popup.png" width="380" alt="The Keepsake popup, showing a list of videos with dates and tick boxes"></p>
 
-## Features
+## Desktop app (beta)
+
+Prefer not to run scripts? The **[Keepsake desktop app](app/README.md)** does the same job in one window and runs the downloads itself, with progress, pause/resume and retries. You sign in on Locals' own page inside the app: **Keepsake never sees your password**, and only the signed-in session is kept, on your computer.
+
+## Features (extension)
 
 - **Find all videos:** scrolls a community's Content page (or Feed) to the end and collects every video with its title and date.
 - **Pick what you want:** tick boxes, title search, Shift-click ranges, and **New** to select only videos added since your last download.
-- **Tidy file names:** `2026-11-01 Patrick and The 3 Hour Fiasco.mp4`. The names stay the same, so re-running skips anything you already have.
+- **Tidy file names:** `2026-11-01 Example video one.mp4`. The names stay the same, so re-running skips anything you already have.
 - **One-click script:** a Windows `.bat` (or Mac/Linux `.sh`) that opens a folder picker, downloads everything, and ends with a summary such as *"352 done, 5 failed"*. Run it again to retry the failures.
 - **Set-up help:** on Windows, the script offers to fetch yt-dlp and ffmpeg if they're missing.
 - **Rename tool:** renames older downloads named by ID (`001 v_9c75….mp4`) to proper titles.
@@ -68,17 +72,22 @@ See [docs/how-it-works.md](docs/how-it-works.md).
 
 ## Development
 
+The detection, naming and scrolling code shared by the extension and the app lives in `core/`. After changing it, run `node scripts/sync-core.js` to copy it into `extension/` (CI checks this).
+
 ```
-node test/run-tests.js                     # offline tests (page hook, script generator, safeguards)
+node test/run-tests.js                     # offline tests (page hook, merging, scrolling, script generator)
 python3 test/e2e/mock_locals_server.py &   # mock Locals page on port 8765
 xvfb-run -a python3 test/e2e/run_e2e.py    # end-to-end test in Chromium (needs playwright)
 npx web-ext lint --source-dir extension    # Firefox add-on linter
 npx web-ext build --source-dir extension   # build a zip
 ```
 
+For the desktop app, see [app/README.md](app/README.md#development).
+
 ## Roadmap
 
-- [ ] Optional companion app that runs downloads directly (no script step)
+- [x] Desktop app that runs downloads directly, no script step ([app/](app/README.md))
+- [x] Desktop app for Mac and Linux, with automatic updates and "Check for new videos"
 
 See [CHANGELOG.md](CHANGELOG.md) for what each version added.
 

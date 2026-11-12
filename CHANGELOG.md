@@ -1,5 +1,22 @@
 # Changelog
 
+## Desktop app 0.2.0 (beta) – unreleased
+- **Mac and Linux** versions (Mac: .dmg for Apple silicon and Intel; Linux: AppImage), built by GitHub Actions alongside Windows.
+- **Automatic updates** on Windows and Linux; a notice with a download link on Mac.
+- **Check for new videos:** looks at the newest posts only (a few seconds) and marks new uploads **NEW** until they are downloaded; the **New** button ticks just those.
+
+## Desktop app 0.1.1 (beta, Windows)
+- **Use my Firefox sign-in:** Google doesn't allow signing in inside apps, so members who sign in to Locals with Google can sign in in Firefox and Keepsake reuses that sign-in (only the locals.com cookies are copied).
+
+## Desktop app 0.1.0 (beta, Windows)
+- New standalone app in `app/`: sign in on Locals' own page inside the app, **Find all videos**, tick and **Download**, with no script step.
+- Download queue with progress, pause/resume, automatic retries, and a clear stop when the token has expired (HTTP 403).
+- yt-dlp and ffmpeg fetched on first use from their official releases and checked against their published checksums.
+- **Rename old downloads** built in.
+
+## Extension (next version)
+- Internal: detection, merging, scrolling and naming code moved to `core/`, shared with the desktop app. No change in behaviour.
+
 ## 0.5.0 – 2026-11-09
 - Renamed to **Keepsake – Downloader for Locals**, with a new add-on ID.
 - Publishing materials: README, Firefox listing text, issue templates and automated checks.
@@ -9,7 +26,7 @@
 - The script stops with a clear message if the token in it has expired.
 - Rename script for earlier downloads named by video ID.
 - Videos found only on the Feed are tagged **FEED**, with a tip to run **Find all videos** there too.
-- Optional look-alike punctuation in file names (`Tony “The Barber”`).
+- Optional look-alike punctuation in file names (`Example “quoted” title`).
 
 ## 0.3.x
 - **Find all videos:** automatic scrolling to the end of the page.

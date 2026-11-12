@@ -43,6 +43,8 @@
         "*://*.locals.com/*"
       ],
       "js": [
+        "src/merge.js",
+        "src/autoscroll.js",
         "src/content.js"
       ],
       "run_at": "document_start"

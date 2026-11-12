@@ -1,0 +1,124 @@
+{
+  "name": "keepsake-locals-app",
+  "productName": "Keepsake",
+  "version": "0.2.0",
+  "description": "Keepsake – Downloader for Locals (unofficial desktop app). Not affiliated with Locals or Rumble.",
+  "author": "Elessar (al-elessar)",
+  "license": "MIT",
+  "homepage": "https://github.com/al-elessar/keepsake-locals",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "sync": "node ../scripts/sync-core.js",
+    "prestart": "npm run sync",
+    "start": "electron .",
+    "predist": "npm run sync",
+    "dist": "electron-builder --win nsis --x64 --publish never",
+    "dist:dir": "npm run sync && electron-builder --dir --publish never",
+    "test": "node test/run-unit.js",
+    "test:e2e": "node test/e2e.js",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:linux": "electron-builder --linux --publish never",
+    "predist:mac": "npm run sync",
+    "predist:linux": "npm run sync"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11",
+    "extract-zip": "^2.0.1"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.0",
+    "playwright-core": "^1.56.0"
+  },
+  "build": {
+    "appId": "com.al-elessar.keepsake",
+    "productName": "Keepsake",
+    "copyright": "Copyright © 2026 al-elessar. MIT licence.",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../LICENSE",
+        "to": "LICENSE.txt"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "Keepsake-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Keepsake",
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Video",
+      "icon": "build/icon.png",
+      "artifactName": "Keepsake-${version}-linux-x86_64.${ext}",
+      "synopsis": "Save videos from your Locals communities for offline viewing (unofficial)"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.video",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "Keepsake-${version}-mac-${arch}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/al-elessar/keepsake-locals/releases/download/app-updates/"
+      }
+    ],
+    "dmg": {
+      "artifactName": "Keepsake-${version}-mac-${arch}.${ext}"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/al-elessar/keepsake-locals.git",
+    "directory": "app"
+  }
+}
