@@ -51,11 +51,11 @@ async function until(fn, ms, what) {
   let ok = false;
   try {
     // Test machines (root, or Ubuntu runners that restrict user namespaces) can't use Chromium's sandbox.
-    const args = ['--no-sandbox', APP];
-    app = await electron.launch({
-      executablePath: require('electron'),
-      args,
-      env: Object.assign({}, process.env, {
+    // KEEPSAKE_E2E_EXECUTABLE: test a packaged build (e.g. dist/linux-unpacked/keepsake-locals-app) instead.
+    const packaged = process.env.KEEPSAKE_E2E_EXECUTABLE;
+    const args = packaged ? ['--no-sandbox'] : ['--no-sandbox', APP];
+    if (packaged) console.log('Testing the packaged app: ' + packaged);
+    const env = Object.assign({}, process.env, {
         KEEPSAKE_TEST_DATA_DIR: path.join(tmp, 'data'),
         KEEPSAKE_TEST_HOST_RULES: 'MAP example.beta.locals.com 127.0.0.1:8765',
         KEEPSAKE_TEST_SCHEME: 'http',
@@ -63,9 +63,10 @@ async function until(fn, ms, what) {
         KEEPSAKE_TEST_FIREFOX_DIR: ffRoot,
         KEEPSAKE_TEST_UPDATE_URL: 'http://127.0.0.1:8765/updates/',
         KEEPSAKE_TEST_NO_UPDATE_DOWNLOAD: '1'
-      })
     });
-    const win = await app.firstWindow();
+    const launch = () => electron.launch({ executablePath: packaged || require('electron'), args, env });
+    app = await launch();
+    let win = await app.firstWindow();
     await win.setViewportSize({ width: 1180, height: 800 }).catch(() => {});
     await win.waitForSelector('#community');
     const shot = async (name) => SHOTS && win.screenshot({ path: path.join(SHOTS, name) });
@@ -181,6 +182,18 @@ async function until(fn, ms, what) {
     if (!/403/.test(halted)) throw new Error('halt message: ' + halted);
     console.log('403 handling: OK');
     await shot('app-halted.png');
+
+    // 7) Close and reopen: the list, choices and download history are all still there
+    await app.close();
+    app = await launch();
+    win = await app.firstWindow();
+    await win.waitForSelector('#community');
+    await until(async () => (await win.textContent('#chipVideos')) === '103 videos', 10000, 'list after restart');
+    await until(async () => (await win.$$eval('#list .pill.done', (p) => p.length)) === 9, 10000, 'saved markers after restart');
+    const after = await app.evaluate(() => global.__keepsake.downloader.summary());
+    if (after.done !== 9 || after.failed !== 1) throw new Error('queue after restart: ' + JSON.stringify(after));
+    if (!/Token valid until/.test(await win.textContent('#chipToken'))) throw new Error('token lost on restart');
+    console.log('after a restart: 103 videos, 9 saved, history and token kept: OK');
     ok = true;
   } catch (e) {
     console.error(e);

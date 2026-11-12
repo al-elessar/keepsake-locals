@@ -358,7 +358,8 @@
     if (!st.ffmpeg && !st.canFetchFfmpeg) {
       $('ffmpegStatus').textContent += ' – on a Mac, install it with Homebrew: brew install ffmpeg';
     }
-    toolsOk = Boolean(st.ytdlp && st.ffmpeg);
+    // Where Keepsake can't fetch ffmpeg itself (Mac: Homebrew), yt-dlp still works without it.
+    toolsOk = Boolean(st.ytdlp && (st.ffmpeg || !st.canFetchFfmpeg));
     $('installTools').disabled = toolsOk || st.busy;
     $('updateYtdlp').disabled = !st.canFetchYtdlp || st.busy;
     $('tabToolsWarn').hidden = toolsOk;
