@@ -1,6 +1,6 @@
 # Changelog
 
-## Desktop app 0.2.0 (beta) – unreleased
+## Desktop app 0.2.0 (beta) – 12 November 2026
 - **Mac and Linux** versions (Mac: .dmg for Apple silicon and Intel; Linux: AppImage), built by GitHub Actions alongside Windows.
 - **Automatic updates** on Windows and Linux; a notice with a download link on Mac.
 - **Check for new videos:** looks at the newest posts only (a few seconds) and marks new uploads **NEW** until they are downloaded; the **New** button ticks just those.

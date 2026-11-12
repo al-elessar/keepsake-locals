@@ -95,4 +95,4 @@ npm run dist:linux              # Linux AppImage
 
 GitHub Actions runs the tests and builds all three on every change (see `.github/workflows/app.yml`).
 
-**Releasing a new app version:** set the version in `app/package.json`, update `app/RELEASE-NOTES.md` and `CHANGELOG.md`, merge, then push a tag `app-v<version>` (e.g. `app-v0.2.0`). The workflow publishes the installers as a release and updates the **app-updates** release, which installed apps check for updates. Don't delete that release.
+**Releasing a new app version:** set the version in `app/package.json`, update `app/RELEASE-NOTES.md` and `CHANGELOG.md`, and merge to `main`. Then on GitHub: **Actions → Desktop app → Run workflow**, keep the branch on `main`, tick **Publish a release**, and click **Run workflow**. It tests, builds, and publishes the installers as release `app-v<version>`, and updates the **app-updates** release, which installed apps check for updates. Don't delete that release. (Pushing a tag `app-v<version>` does the same.)
